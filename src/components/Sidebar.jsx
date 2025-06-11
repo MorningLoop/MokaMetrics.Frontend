@@ -1,8 +1,8 @@
-import { DashboardOutlined, OrderedListOutlined, MenuUnfoldOutlined, MenuFoldOutlined, ShopOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { DashboardOutlined, OrderedListOutlined, MenuUnfoldOutlined, MenuFoldOutlined, ShopOutlined, CheckCircleOutlined, CustomerServiceFilled, CustomerServiceTwoTone, UserAddOutlined } from '@ant-design/icons';
 import { Menu, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { FactoryIcon } from 'lucide-react';
+import { FactoryIcon, User } from 'lucide-react';
 import { icon } from 'leaflet';
 
 const Sidebar = () => {
@@ -73,6 +73,12 @@ const Sidebar = () => {
                 
             ],
         },
+        {
+            key: 'customers',
+            label: 'Customers',
+            type: 'item',
+            icon: <UserAddOutlined />,
+        }
     ];
 
     const toggleCollapsed = () => {
