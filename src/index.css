@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+
+.ant-menu-item-selected{
+    background-color: #00d5be !important;
+    color:black !important;
+}
+
+.ant-menu-dark.ant-menu-inline .ant-menu-sub.ant-menu-inline{
+    background-color: #18181b !important;
+}
+

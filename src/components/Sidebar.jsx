@@ -1,0 +1,120 @@
+import { DashboardOutlined, OrderedListOutlined, MenuUnfoldOutlined, MenuFoldOutlined, ShopOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Menu, Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { FactoryIcon } from 'lucide-react';
+import { icon } from 'leaflet';
+
+const Sidebar = () => {
+    const [collapsed, setCollapsed] = useState(false);
+
+    const navigate = useNavigate();
+
+    const items = [
+        {
+            key: '',
+            label: 'Dashboard',
+            type: 'item',
+            icon: <DashboardOutlined />,
+        },
+        {
+            key: 'order-form',
+            label: 'Order Form',
+            type: 'item',
+            icon: <OrderedListOutlined />,
+        },
+        {
+            key: 'factory',
+            label: 'Your Factory',
+            icon: <OrderedListOutlined />,
+            children: [
+                {
+                    key: 'factory-1',
+                    label: 'Status Factory 1',
+                    icon: <ShopOutlined />,
+                    children: 
+                    [
+                        {
+                            key: 'status/1',
+                            label: 'Status',
+                            type: 'item',
+                            icon: <CheckCircleOutlined />
+                        }
+                    ]
+                },
+                {
+                    key: 'factory-2',
+                    label: 'Status Factory 2',
+                    icon: <ShopOutlined />,
+                    children: 
+                    [
+                        {
+                            key: 'status/2',
+                            label: 'Status',
+                            type: 'item',
+                            icon: <CheckCircleOutlined />
+                        }
+                    ]
+                },
+                {
+                    key: 'factory-3',
+                    label: 'Status Factory 3',
+                    icon: <ShopOutlined />,
+                    children: 
+                    [
+                        {
+                            key: 'status/3',
+                            label: 'Status',
+                            type: 'item',
+                            icon: <CheckCircleOutlined />
+                        }
+                    ]
+                },
+                
+            ],
+        },
+    ];
+
+    const toggleCollapsed = () => {
+        setCollapsed(!collapsed);
+    };
+
+
+    return (
+        <div
+            className={`flex flex-col bg-zinc-900 transition-all duration-200`}
+            style={{
+                width: collapsed ? 64 : 240,
+                minWidth: collapsed ? 64 : 240,
+                maxWidth: collapsed ? 64 : 240,
+                overflowX: 'hidden',
+
+                minHeight: '100vh'
+            }}
+        >
+            <button
+                className='m-2 bg-white rounded p-1 hover:border-teal-400 border transition-all hover:tracking-normal'
+                type="button"
+                onClick={toggleCollapsed}
+            >
+                {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            </button>
+            <Menu
+                style={{
+                    backgroundColor: '#18181b',
+                    borderRight: 0,
+                    width: '100%',
+                    minWidth: 0,
+                    transition: 'width 0.2s'
+                }}
+                inlineCollapsed={collapsed}
+                mode="inline"
+                theme='dark'
+                items={items}
+                onClick={({ key }) => navigate(key)}
+            />
+        </div>
+    );
+}
+
+export default Sidebar;
