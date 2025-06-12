@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Drawer, Form, Input, Modal, message, Space } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 
 const Customers = () => {
     const [customers, setCustomers] = useState([
@@ -27,13 +27,17 @@ const Customers = () => {
     ]); const [drawerVisible, setDrawerVisible] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [form] = Form.useForm();
-    const [modal, contextHolder] = Modal.useModal();
-
-    const handleEdit = (customer) => {
+    const [modal, contextHolder] = Modal.useModal();    const handleEdit = (customer) => {
         setEditingCustomer(customer);
         form.setFieldsValue(customer);
         setDrawerVisible(true);
-    }; const handleDelete = (customerId) => {
+    };
+
+    const handleAdd = () => {
+        setEditingCustomer(null);
+        form.resetFields();
+        setDrawerVisible(true);
+    };const handleDelete = (customerId) => {
         console.log('handleDelete chiamata con ID:', customerId);
         modal.confirm({
             title: 'Sei sicuro di voler eliminare questo customer?',
@@ -47,22 +51,44 @@ const Customers = () => {
                 message.success('Customer eliminato con successo');
             },
         });
-    };
-
-    const handleSave = (values) => {
-        setCustomers(customers.map(c =>
-            c.id === editingCustomer.id ? { ...c, ...values } : c
-        ));
+    };    const handleSave = (values) => {
+        if (editingCustomer) {
+            // Modifica customer esistente
+            setCustomers(customers.map(c =>
+                c.id === editingCustomer.id ? { ...c, ...values } : c
+            ));
+            message.success('Customer aggiornato con successo');
+        } else {
+            // Aggiunge nuovo customer
+            const newCustomer = {
+                id: Math.max(...customers.map(c => c.id)) + 1,
+                ...values
+            };
+            setCustomers([...customers, newCustomer]);
+            message.success('Customer aggiunto con successo');
+        }
         setDrawerVisible(false);
         setEditingCustomer(null);
         form.resetFields();
-        message.success('Customer aggiornato con successo');
-    }; return (
-        <div className="min-h-screen bg-zinc-900 w-screen p-6">
+    };return (        <div className="min-h-screen bg-zinc-900 w-screen p-6">
             {contextHolder}
-            <h1 className="text-2xl font-bold mb-6 text-zinc-100">Customers</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold text-zinc-100">Customers</h1>
+                <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />}
+                    onClick={handleAdd}
+                    style={{
+                        backgroundColor: '#14b8a6',
+                        borderColor: '#14b8a6',
+                        color: '#ffffff'
+                    }}
+                >
+                    Aggiungi Customer
+                </Button>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">                {customers.map(customer => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{customers.map(customer => (
                 <Card
                     key={customer.id}
                     className="w-full bg-zinc-800 border-zinc-700"
@@ -103,9 +129,8 @@ const Customers = () => {
                     />
                 </Card>
             ))}
-            </div>
-            <Drawer
-                title={<span className="text-zinc-100">Modifica Customer</span>}
+            </div>            <Drawer
+                title={<span className="text-zinc-100">{editingCustomer ? 'Modifica Customer' : 'Aggiungi Nuovo Customer'}</span>}
                 placement="right"
                 width={400}
                 onClose={() => {
