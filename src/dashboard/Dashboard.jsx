@@ -46,9 +46,9 @@ const production = [
 ];
 
 const plants = [
-  { name: "Italy", position: [45.43, 11.88], running: 10, idle: 2, alarm: 1 },
-  { name: "Brazil", position: [-23.55, -46.63], running: 7, idle: 4, alarm: 0 },
-  { name: "Vietnam", position: [10.82, 106.63], running: 9, idle: 3, alarm: 2 }
+  { name: "Italy", position: [46.336829606339776, 13.138468541188923], running: 1, idle: 2, alarm: 1 },
+  { name: "Brazil", position: [-13.920051047568641, -50.67785644713438], running: 7, idle: 4, alarm: 0 },
+  { name: "Vietnam", position: [17.41240398788743, 102.8124039972215], running: 9, idle: 3, alarm: 2 }
 ];
 
 const events = [
