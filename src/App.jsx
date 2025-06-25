@@ -5,8 +5,15 @@ import StatusFactory from "./status/StatusFactory";
 import './index.css';
 import Layout from "./components/Layout";
 import Customers from "./customers/Customers";
+import { useEffect } from "react";
+import {getStatusMachines} from "./providers/status/statusMachinesProvider";
+
+
 
 export default function App() {
+  useEffect(() => {
+    console.log(getStatusMachines());
+  }, []);
   return (
       <BrowserRouter>
         <Routes>
