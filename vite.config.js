@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, '.', "");
+  const env = loadEnv(mode, ".", "");
 
   return {
     plugins: [react(), tailwindcss()],
@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       port: parseInt(env.PORT),
       proxy: {
         "/api": {
-          target: 'https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net',
+          target: "http://localhost:5129",
           changeOrigin: true,
           // Don't rewrite the path - keep /api prefix
           secure: false,
@@ -26,6 +26,5 @@ export default defineConfig(({ mode }) => {
         input: "./index.html",
       },
     },
-
   };
 });

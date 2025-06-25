@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
-import apiService from '../services/api';
-import { Spin, message } from 'antd';
+import apiService from "../services/api";
+import { Spin, message } from "antd";
 import {
   AreaChart,
   Area,
@@ -10,19 +9,17 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as ChartTooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 import {
   MapContainer,
   TileLayer,
   CircleMarker,
-  Tooltip as MapTooltip
+  Tooltip as MapTooltip,
 } from "react-leaflet";
 
 import { TrendingUp, Package, Layers, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  MOCK DATA (sostituisci con chiamate API reali)
@@ -31,7 +28,7 @@ const kpiDefault = {
   output: 136,
   oee: 92,
   lots: 5,
-  alarms: 2
+  alarms: 2,
 };
 
 const production = [
@@ -43,13 +40,31 @@ const production = [
   { time: "10:00", value: 50 },
   { time: "12:00", value: 58 },
   { time: "14:00", value: 60 },
-  { time: "16:00", value: 70 }
+  { time: "16:00", value: 70 },
 ];
 
 const plants = [
-  { name: "Italy", position: [46.336829606339776, 13.138468541188923], running: 1, idle: 2, alarm: 1 },
-  { name: "Brazil", position: [-13.920051047568641, -50.67785644713438], running: 7, idle: 4, alarm: 0 },
-  { name: "Vietnam", position: [17.41240398788743, 102.8124039972215], running: 9, idle: 3, alarm: 2 }
+  {
+    name: "Italy",
+    position: [46.336829606339776, 13.138468541188923],
+    running: 1,
+    idle: 2,
+    alarm: 1,
+  },
+  {
+    name: "Brazil",
+    position: [-13.920051047568641, -50.67785644713438],
+    running: 7,
+    idle: 4,
+    alarm: 0,
+  },
+  {
+    name: "Vietnam",
+    position: [17.41240398788743, 102.8124039972215],
+    running: 9,
+    idle: 3,
+    alarm: 2,
+  },
 ];
 
 const events = [
@@ -57,99 +72,97 @@ const events = [
     severity: "Warning",
     time: "12:56",
     plant: "Italy",
-    message: "Vibration threshold exceeded"
+    message: "Vibration threshold exceeded",
   },
   {
     severity: "Error",
     time: "16:06",
     plant: "Brazil",
-    message: "Cooling system issue – Line 3"
+    message: "Cooling system issue – Line 3",
   },
   {
     severity: "Info",
     time: "14:45",
     plant: "Vietnam",
-    message: "Temperature back to nominal"
-  }
+    message: "Temperature back to nominal",
+  },
 ];
 
-const factory =
-  [
-    {
-      id: 1,
-      name: "Italy",
-      machines: [
-        {
-          name: "Macchina CNC2",
-          status: "error"
-        },
-        {
-          name: "Macchina CNC3",
-          status: "error"
-        },
-        {
-          name: "Macchina CNC4",
-          status: "error"
-        }
-        ,
-        {
-          name: "Macchina CNC4",
-          status: "idle"
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: "Vietnam",
-      machines: [
-        {
-          name: "Macchina CNC2",
-          status: "running"
-        },
-        {
-          name: "Macchina CNC3",
-          status: "idle"
-        },
-        {
-          name: "Macchina CNC4",
-          status: "running"
-        },
-        {
-          name: "Macchina CNC4",
-          status: "error"
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: "Brasil",
-      machines: [
-        {
-          name: "Macchina CNC2",
-          status: "running"
-        },
-        {
-          name: "Macchina CNC3",
-          status: "idle"
-        },
-        {
-          name: "Macchina CNC4",
-          status: "running"
-        },
-        {
-          name: "Macchina CNC4",
-          status: "error"
-        }
-      ]
-    }
-  ]
+const factory = [
+  {
+    id: 1,
+    name: "Italy",
+    machines: [
+      {
+        name: "Macchina CNC2",
+        status: "error",
+      },
+      {
+        name: "Macchina CNC3",
+        status: "error",
+      },
+      {
+        name: "Macchina CNC4",
+        status: "error",
+      },
+      {
+        name: "Macchina CNC4",
+        status: "idle",
+      },
+    ],
+  },
+  {
+    id: 2,
+    name: "Vietnam",
+    machines: [
+      {
+        name: "Macchina CNC2",
+        status: "running",
+      },
+      {
+        name: "Macchina CNC3",
+        status: "idle",
+      },
+      {
+        name: "Macchina CNC4",
+        status: "running",
+      },
+      {
+        name: "Macchina CNC4",
+        status: "error",
+      },
+    ],
+  },
+  {
+    id: 3,
+    name: "Brasil",
+    machines: [
+      {
+        name: "Macchina CNC2",
+        status: "running",
+      },
+      {
+        name: "Macchina CNC3",
+        status: "idle",
+      },
+      {
+        name: "Macchina CNC4",
+        status: "running",
+      },
+      {
+        name: "Macchina CNC4",
+        status: "error",
+      },
+    ],
+  },
+];
 
 // Heat‑map dati di esempio (0–100% utilisation)
 const machines = [
   { id: "CNC‑01", hours: [40, 30, 60, 75, 55, 20, 10] },
   { id: "LATHE‑02", hours: [30, 50, 45, 80, 70, 60, 35] },
   { id: "ASMB‑01", hours: [20, 25, 40, 60, 50, 30, 15] },
-  { id: "TEST‑01", hours: [50, 70, 80, 90, 85, 60, 40] }
+  { id: "TEST‑01", hours: [50, 70, 80, 90, 85, 60, 40] },
 ];
 
 function KPI({ icon, label, value, className = "" }) {
@@ -223,7 +236,7 @@ function PlantMap() {
               color: "#14b8a6",
               weight: 3,
               fillColor: "#14b8a6",
-              fillOpacity: 0.7
+              fillOpacity: 0.7,
             }}
           >
             <MapTooltip>
@@ -247,17 +260,29 @@ function PlantMap() {
   );
 }
 
-function EventLogTable({ orders = [] }) {
+function EventLogTable({ orders = [], customers = [] }) {
   // Convert orders to event log format
-  const orderEvents = orders.slice(0, 5).map(order => ({
-    severity: "Info",
-    time: new Date(order.orderDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-    plant: `Customer ${order.customerId}`,
-    message: `Order #${order.id} - ${order.lots?.reduce((sum, lot) => sum + lot.quantity, 0) || 0} machines`
-  }));
-  
+  const orderEvents = orders.slice(0, 5).map((order) => {
+    const customer = customers.find((c) => c.id === order.customerId);
+    const customerName = customer
+      ? customer.name
+      : `Customer ${order.customerId}`;
+
+    return {
+      severity: "Info",
+      time: new Date(order.orderDate).toLocaleTimeString("it-IT", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      plant: customerName,
+      message: `Order #${order.id} - ${
+        order.lots?.reduce((sum, lot) => sum + lot.quantity, 0) || 0
+      } machines`,
+    };
+  });
+
   const displayEvents = orderEvents.length > 0 ? orderEvents : events;
-  
+
   return (
     <div className="rounded-2xl bg-zinc-800 p-4 overflow-auto">
       <h2 className="text-zinc-100 text-lg mb-2">Recent Orders</h2>
@@ -325,49 +350,65 @@ const StatusFactory = () => {
         <p className="text-white text-lg mb-2">Status Factory</p>
       </div>
       <div className="flex">
-        {factory.map(f => {
+        {factory.map((f) => {
           return (
-            <div onClick={() => {
-              navigate(`status/${f.id}`)
-            }} className="bg-zinc-900 p-2 m-1 rounded hover:bg-teal-800">
-              <p className="text-2xl opacity-55 text-center">{f.name.toUpperCase()}</p>
+            <div
+              onClick={() => {
+                navigate(`status/${f.id}`);
+              }}
+              className="bg-zinc-900 p-2 m-1 rounded hover:bg-teal-800"
+            >
+              <p className="text-2xl opacity-55 text-center">
+                {f.name.toUpperCase()}
+              </p>
               <div className="flex flex-wrap ">
-                {f.machines.map(m => {
+                {f.machines.map((m) => {
                   return (
-                    <div className={`w-10 h-10 m-1 rounded ${m.status == "error" ? "bg-red-500" : m.status == "running" ? "bg-green-400" : "bg-gray-500"}`}></div>)
+                    <div
+                      className={`w-10 h-10 m-1 rounded ${
+                        m.status == "error"
+                          ? "bg-red-500"
+                          : m.status == "running"
+                          ? "bg-green-400"
+                          : "bg-gray-500"
+                      }`}
+                    ></div>
+                  );
                 })}
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  MAIN DASHBOARD
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [kpi, setKpi] = useState(kpiDefault);
-  
-  // Fetch orders from API
+
+  // Fetch orders and customers from API
   useEffect(() => {
     fetchOrders();
-    
+    fetchCustomers();
+
     // Connect to WebSocket for real-time updates
     const ws = apiService.connectToStatusWebSocket(
       (data) => {
-        console.log('WebSocket data received:', data);
+        console.log("WebSocket data received:", data);
         // Update dashboard with real-time data if needed
       },
       (error) => {
-        console.error('WebSocket error:', error);
+        console.error("WebSocket error:", error);
       }
     );
-    
+
     // Cleanup on unmount
     return () => {
       if (ws) {
@@ -375,23 +416,45 @@ export default function Dashboard() {
       }
     };
   }, []);
-  
+
+  const fetchCustomers = async () => {
+    try {
+      const data = await apiService.getCustomers();
+      console.log("Fetched customers data:", data);
+
+      // Check if data is wrapped in a response object
+      const customersList = Array.isArray(data)
+        ? data
+        : data?.data
+        ? data.data
+        : data?.customers
+        ? data.customers
+        : [];
+
+      setCustomers(customersList);
+    } catch (error) {
+      message.error("Failed to fetch customers: " + error.message);
+      console.error("Error fetching customers:", error);
+      setCustomers([]);
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const data = await apiService.getOrders();
       setOrders(data);
-      
+
       // Update KPIs based on orders
       if (data && data.length > 0) {
-        setKpi(prev => ({
+        setKpi((prev) => ({
           ...prev,
-          lots: data.length
+          lots: data.length,
         }));
       }
     } catch (error) {
-      message.error('Failed to fetch orders: ' + error.message);
-      console.error('Error fetching orders:', error);
+      message.error("Failed to fetch orders: " + error.message);
+      console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
@@ -401,47 +464,48 @@ export default function Dashboard() {
   return (
     <Spin spinning={loading} tip="Loading dashboard data...">
       <div className="min-h-screen w-screen bg-zinc-900 text-zinc-100 p-6 space-y-6 font-sans flex flex-row">
+        <div className="flex flex-col w-full space-y-6">
+          {/* Header */}
+          <header className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Mekspresso
+            </h1>
+            <select
+              value={selectedPlant}
+              onChange={(e) => setSelectedPlant(e.target.value)}
+              className="bg-zinc-800 text-zinc-100 p-2 rounded-lg"
+            >
+              <option>All Plants</option>
+              {plants.map((p) => (
+                <option key={p.name}>{p.name}</option>
+              ))}
+            </select>
+          </header>
 
-      <div className="flex flex-col w-full space-y-6">
-        {/* Header */}
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Mekspresso</h1>
-          <select
-            value={selectedPlant}
-            onChange={(e) => setSelectedPlant(e.target.value)}
-            className="bg-zinc-800 text-zinc-100 p-2 rounded-lg"
-          >
-            <option>All Plants</option>
-            {plants.map((p) => (
-              <option key={p.name}>{p.name}</option>
-            ))}
-          </select>
-        </header>
+          {/* KPI Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <KPI icon={Package} label="Output Today" value={kpi.output} />
+            <KPI icon={TrendingUp} label="OEE" value={`${kpi.oee}%`} />
+            <KPI icon={Layers} label="Active Lots" value={kpi.lots} />
+            <KPI icon={Bell} label="Open Alarms" value={kpi.alarms} />
+          </div>
 
-        {/* KPI Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KPI icon={Package} label="Output Today" value={kpi.output} />
-          <KPI icon={TrendingUp} label="OEE" value={`${kpi.oee}%`} />
-          <KPI icon={Layers} label="Active Lots" value={kpi.lots} />
-          <KPI icon={Bell} label="Open Alarms" value={kpi.alarms} />
+          {/* Production Chart and status factory*/}
+          <div className="grid md:grid-cols-2 gap-4">
+            <ProductionChart />
+            <StatusFactory />
+          </div>
+
+          {/* Map + Event Log */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <PlantMap />
+            <EventLogTable orders={orders} customers={customers} />
+          </div>
+
+          {/* Heat Map */}
+          <MachineHeatMap />
         </div>
-
-        {/* Production Chart and status factory*/}
-        <div className="grid md:grid-cols-2 gap-4">
-          <ProductionChart />
-          <StatusFactory />
-        </div>
-
-        {/* Map + Event Log */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <PlantMap />
-          <EventLogTable orders={orders} />
-        </div>
-
-        {/* Heat Map */}
-        <MachineHeatMap />
       </div>
-    </div>
     </Spin>
   );
 }
