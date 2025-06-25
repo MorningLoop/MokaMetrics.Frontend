@@ -1,6 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
+import apiService from '../services/api';
+import { Spin, message } from 'antd';
 import {
   AreaChart,
   Area,
@@ -17,7 +19,6 @@ import {
   Tooltip as MapTooltip
 } from "react-leaflet";
 
-import { motion } from "framer-motion";
 import { TrendingUp, Package, Layers, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -26,7 +27,7 @@ import { useNavigate } from "react-router-dom";
 // ──────────────────────────────────────────────────────────────────────────────
 //  MOCK DATA (sostituisci con chiamate API reali)
 // ──────────────────────────────────────────────────────────────────────────────
-const kpi = {
+const kpiDefault = {
   output: 136,
   oee: 92,
   lots: 5,
@@ -151,12 +152,10 @@ const machines = [
   { id: "TEST‑01", hours: [50, 70, 80, 90, 85, 60, 40] }
 ];
 
-function KPI({ icon: Icon, label, value, className = "" }) {
+function KPI({ icon, label, value, className = "" }) {
+  const Icon = icon;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+    <div
       className={`rounded-2xl bg-zinc-800 p-4 flex items-center space-x-4 ${className}`}
     >
       <Icon className="w-6 h-6 text-teal-400 shrink-0" />
@@ -164,7 +163,7 @@ function KPI({ icon: Icon, label, value, className = "" }) {
         <div className="text-sm text-zinc-400 uppercase">{label}</div>
         <div className="text-2xl font-bold text-zinc-100">{value}</div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -248,10 +247,20 @@ function PlantMap() {
   );
 }
 
-function EventLogTable() {
+function EventLogTable({ orders = [] }) {
+  // Convert orders to event log format
+  const orderEvents = orders.slice(0, 5).map(order => ({
+    severity: "Info",
+    time: new Date(order.orderDate).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+    plant: `Customer ${order.customerId}`,
+    message: `Order #${order.id} - ${order.lots?.reduce((sum, lot) => sum + lot.quantity, 0) || 0} machines`
+  }));
+  
+  const displayEvents = orderEvents.length > 0 ? orderEvents : events;
+  
   return (
     <div className="rounded-2xl bg-zinc-800 p-4 overflow-auto">
-      <h2 className="text-zinc-100 text-lg mb-2">Event Log</h2>
+      <h2 className="text-zinc-100 text-lg mb-2">Recent Orders</h2>
       <table className="w-full text-left text-sm">
         <thead className="uppercase text-zinc-400 border-b border-zinc-700">
           <tr>
@@ -262,7 +271,7 @@ function EventLogTable() {
           </tr>
         </thead>
         <tbody>
-          {events.map((e, i) => (
+          {displayEvents.map((e, i) => (
             <tr
               key={i}
               className="border-b border-zinc-700 hover:bg-zinc-700/30"
@@ -340,10 +349,58 @@ const StatusFactory = () => {
 //  MAIN DASHBOARD
 // ──────────────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [kpi, setKpi] = useState(kpiDefault);
+  
+  // Fetch orders from API
+  useEffect(() => {
+    fetchOrders();
+    
+    // Connect to WebSocket for real-time updates
+    const ws = apiService.connectToStatusWebSocket(
+      (data) => {
+        console.log('WebSocket data received:', data);
+        // Update dashboard with real-time data if needed
+      },
+      (error) => {
+        console.error('WebSocket error:', error);
+      }
+    );
+    
+    // Cleanup on unmount
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, []);
+  
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getOrders();
+      setOrders(data);
+      
+      // Update KPIs based on orders
+      if (data && data.length > 0) {
+        setKpi(prev => ({
+          ...prev,
+          lots: data.length
+        }));
+      }
+    } catch (error) {
+      message.error('Failed to fetch orders: ' + error.message);
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const [selectedPlant, setSelectedPlant] = useState("All Plants");
 
   return (
-    <div className="min-h-screen w-screen bg-zinc-900 text-zinc-100 p-6 space-y-6 font-sans flex flex-row">
+    <Spin spinning={loading} tip="Loading dashboard data...">
+      <div className="min-h-screen w-screen bg-zinc-900 text-zinc-100 p-6 space-y-6 font-sans flex flex-row">
 
       <div className="flex flex-col w-full space-y-6">
         {/* Header */}
@@ -378,12 +435,13 @@ export default function Dashboard() {
         {/* Map + Event Log */}
         <div className="grid md:grid-cols-2 gap-4">
           <PlantMap />
-          <EventLogTable />
+          <EventLogTable orders={orders} />
         </div>
 
         {/* Heat Map */}
         <MachineHeatMap />
       </div>
     </div>
+    </Spin>
   );
 }

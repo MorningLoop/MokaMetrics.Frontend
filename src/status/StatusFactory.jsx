@@ -1,10 +1,43 @@
 import { notification } from "antd";
 import { CheckCircle, PlayCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import apiService from '../services/api';
 
 const StatusFactory = () => {
     const { idFactory } = useParams();
+    const [machineStatuses, setMachineStatuses] = useState({});
+    // eslint-disable-next-line no-unused-vars
+    const [_wsConnection, setWsConnection] = useState(null);
+    
+    useEffect(() => {
+        // Connect to WebSocket for real-time status updates
+        const ws = apiService.connectToStatusWebSocket(
+            (data) => {
+                console.log('Factory status update:', data);
+                // Update machine statuses based on WebSocket data
+                if (data.factoryId === parseInt(idFactory)) {
+                    setMachineStatuses(prevStatuses => ({
+                        ...prevStatuses,
+                        [data.machineId]: data.status
+                    }));
+                }
+            },
+            (error) => {
+                console.error('WebSocket error:', error);
+            }
+        );
+        
+        setWsConnection(ws);
+        
+        // Cleanup on unmount
+        return () => {
+            if (ws) {
+                ws.close();
+            }
+        };
+    }, [idFactory]);
+    
     const factory =
         [
             {
@@ -98,11 +131,10 @@ const StatusFactory = () => {
                 ]
             }
         ]
-    const [factorydb, setFactorydb] = useState(factory);
     const selectedFactory = factory.find(f => f.id === Number(idFactory));
     const [api, contextHolder] = notification.useNotification();
 
-    const showRestartMessage = (name, id) => {
+    const showRestartMessage = (name) => {
         api.open({
             message: 'Restart Machine ' + name,
             icon: <PlayCircle size={24} className="text-black" />,
@@ -138,18 +170,20 @@ const StatusFactory = () => {
                 </h1>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
                     {contextHolder}
-                    {selectedFactory.machines.map((m, index) => {
+                    {selectedFactory.machines.map((m) => {
+                        // Use real-time status if available, otherwise use default
+                        const currentStatus = machineStatuses[m.id] || m.status;
                         return (
                             <div key={m.id} className="bg-zinc-800 rounded-xl p-4 hover:bg-zinc-700 transition-all duration-300">
                                 <div 
                                     onClick={sendReloadMachine(m.name, m.id, m.status)} 
                                     className={`w-full aspect-square mb-4 hover:shadow-lg hover:shadow-white/20 transition-all duration-300 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer ${
                                         m.status === "error" ? "bg-red-500 hover:bg-red-400" : 
-                                        m.status === "running" ? "bg-green-400 hover:bg-green-300" : 
+                                        currentStatus === "running" ? "bg-green-400 hover:bg-green-300" : 
                                         "bg-gray-500 hover:bg-gray-400"
                                     }`}
                                 >
-                                    {m.status === "error" ? (
+                                    {currentStatus === "error" ? (
                                         <PlayCircle size={60} className="text-gray-100 sm:w-16 sm:h-16 lg:w-20 lg:h-20" />
                                     ) : null}
                                 </div>
@@ -158,11 +192,11 @@ const StatusFactory = () => {
                                     <p className="text-zinc-300 text-sm">
                                         <span className="font-medium">Status:</span> 
                                         <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                            m.status === "error" ? "bg-red-500/20 text-red-300" :
-                                            m.status === "running" ? "bg-green-500/20 text-green-300" :
+                                            currentStatus === "error" ? "bg-red-500/20 text-red-300" :
+                                            currentStatus === "running" ? "bg-green-500/20 text-green-300" :
                                             "bg-gray-500/20 text-gray-300"
                                         }`}>
-                                            {m.status}
+                                            {currentStatus}
                                         </span>
                                     </p>
                                     {m.message && (
