@@ -16,8 +16,8 @@ const Sidebar = () => {
             icon: <DashboardOutlined />,
         },
         {
-            key: 'order-form',
-            label: 'Order Form',
+            key: 'orders',
+            label: 'Orders',
             type: 'item',
             icon: <OrderedListOutlined />,
         },
