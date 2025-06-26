@@ -1,217 +1,224 @@
 import { notification } from "antd";
-import { CheckCircle, PlayCircle } from "lucide-react";
+import { CheckCircle, PlayCircle, Circle, Loader2, AlertTriangle } from "lucide-react";
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import apiService from '../services/api';
+import { useStatusMachines } from "../hooks/useStatusMachines";
 
 const StatusFactory = () => {
     const { idFactory } = useParams();
-    const [machineStatuses, setMachineStatuses] = useState({});
-    // eslint-disable-next-line no-unused-vars
-    const [_wsConnection, setWsConnection] = useState(null);
     
-    useEffect(() => {
-        // Connect to WebSocket for real-time status updates
-        const ws = apiService.connectToStatusWebSocket(
-            (data) => {
-                console.log('Factory status update:', data);
-                // Update machine statuses based on WebSocket data
-                if (data.factoryId === parseInt(idFactory)) {
-                    setMachineStatuses(prevStatuses => ({
-                        ...prevStatuses,
-                        [data.machineId]: data.status
-                    }));
-                }
-            },
-            (error) => {
-                console.error('WebSocket error:', error);
-            }
-        );
-        
-        setWsConnection(ws);
-        
-        // Cleanup on unmount
-        return () => {
-            if (ws) {
-                ws.close();
-            }
-        };
-    }, [idFactory]);
+    // Utilizzo del contesto per i dati WebSocket
+    const { statusMachines } = useStatusMachines();
     
-    const factory =
-        [
-            {
-                id: 1,
-                name: "Italy",
-                machines: [
-                    {
-                        id: 0,
-                        name: "Macchina CNC2",
-                        status: "error",
-                        message: "Errore di connessione"
-                    },
-                    {
-                        id: 1,
-                        name: "Macchina CNC3",
-                        status: "error",
-                        message: "Errore di connessione"
-                    },
-                    {
-                        id: 2,
-                        name: "Macchina CNC4",
-                        status: "error",
-                        message: "Errore di connessione"
-                    },
-                    {
-                        id: 3,
-                        name: "Macchina CNC4",
-                        status: "idle",
-                        message: ""
-                    }
-                ]
-            },
-            {
-                id: 2,
-                name: "Vietnam",
-                machines: [
-                    {
-                        id: 0,
-                        name: "Macchina CNC2",
-                        status: "running",
-                        message: ""
-                    },
-                    {
-                        id: 1,
-                        name: "Macchina CNC3",
-                        status: "idle",
-                        message: ""
-                    },
-                    {
-                        id: 2,
-                        name: "Macchina CNC4",
-                        status: "running",
-                        message: ""
-                    },
-                    {
-                        id: 3,
-                        name: "Macchina CNC4",
-                        status: "error",
-                        message: "Errore di connessione"
-                    }
-                ]
-            },
-            {
-                id: 3,
-                name: "Brasil",
-                machines: [
-                    {
-                        id: 0,
-                        name: "Macchina CNC2",
-                        status: "running",
-                        message: ""
-                    },
-                    {
-                        id: 1,
-                        name: "Macchina CNC3",
-                        status: "idle",
-                        message: ""
-                    },
-                    {
-                        id: 2,
-                        name: "Macchina CNC4",
-                        status: "running",
-                        message: ""
-                    },
-                    {
-                        id: 3,
-                        name: "Macchina CNC4",
-                        status: "error",
-                        message: "Errore di connessione"
-                    }
-                ]
-            }
+    // Trova la factory corrente e le sue macchine
+    const currentFactory = statusMachines.filter(machine => 
+        machine.factoryId === parseInt(idFactory)
+    );
+    
+    // Nomi delle factory
+    const factoryNames = {
+        1: "Italy",
+        2: "Vietnam", 
+        3: "Brasil"
+    };
+    
+    const factoryName = factoryNames[parseInt(idFactory)] || `Factory ${idFactory}`;
+    
+    // Se non ci sono macchine dal WebSocket, usa dati di fallback
+    const defaultMachines = {
+        1: [
+            { machineId: "CNC-01", factoryId: 1, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "CNC-02", factoryId: 1, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "CNC-03", factoryId: 1, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "CNC-04", factoryId: 1, status: "pending", timestamp: new Date().toISOString() }
+        ],
+        2: [
+            { machineId: "LATHE-01", factoryId: 2, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "LATHE-02", factoryId: 2, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "LATHE-03", factoryId: 2, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "LATHE-04", factoryId: 2, status: "pending", timestamp: new Date().toISOString() }
+        ],
+        3: [
+            { machineId: "MILL-01", factoryId: 3, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "MILL-02", factoryId: 3, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "MILL-03", factoryId: 3, status: "pending", timestamp: new Date().toISOString() },
+            { machineId: "MILL-04", factoryId: 3, status: "pending", timestamp: new Date().toISOString() }
         ]
-    const selectedFactory = factory.find(f => f.id === Number(idFactory));
+    };
+    
+    const machines = currentFactory.length > 0 ? currentFactory : 
+                   (defaultMachines[parseInt(idFactory)] || []);
+    
+    // Statistiche
+    const runningCount = machines.filter(m => m.status === 'running').length;
+    const idleCount = machines.filter(m => m.status === 'idle').length;
+    const errorCount = machines.filter(m => m.status === 'error').length;
+    const pendingCount = machines.filter(m => m.status === 'pending').length;
+    
     const [api, contextHolder] = notification.useNotification();
 
-    const showRestartMessage = (name) => {
+    const showRestartMessage = (machineName) => {
         api.open({
-            message: 'Restart Machine ' + name,
-            icon: <PlayCircle size={24} className="text-black" />,
-            description:
-                'The manutenance team is working to resolve the issue. Please wait.',
+            message: `Restart Machine ${machineName}`,
+            icon: <PlayCircle size={24} className="text-blue-600" />,
+            description: 'The maintenance team is working to resolve the issue. Please wait.',
             duration: 3,
             showProgress: true,
         });
-
     };
 
-    const showOkMessage = (name) => {
+    const showOkMessage = (machineName) => {
         api.open({
-            message: 'This Machine ' + name,
-            icon: <CheckCircle size={24} className="text-black" />,
-            description:
-                'This machine is running correctly.',
+            message: `Machine ${machineName}`,
+            icon: <CheckCircle size={24} className="text-green-600" />,
+            description: 'This machine is running correctly.',
             duration: 3,
             showProgress: true,
         });
+    };
 
-    };    const sendReloadMachine = (name, id, status) => () => {
-        if (status === "error") {
-            showRestartMessage(name);
+    const handleMachineClick = (machine) => {
+        if (machine.status === "error") {
+            showRestartMessage(machine.machineId);
         } else {
-            showOkMessage(name, id);
+            showOkMessage(machine.machineId);
         }
-    };return (
-        <div className="bg-zinc-900 min-h-screen w-full px-4 py-6">
+    };
+
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'running':
+                return <CheckCircle size={48} className="text-white" />;
+            case 'idle':
+                return <Circle size={48} className="text-white" />;
+            case 'error':
+                return <AlertTriangle size={48} className="text-white" />;
+            case 'pending':
+                return <Loader2 size={48} className="text-white animate-spin" />;
+            default:
+                return <Circle size={48} className="text-white" />;
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'running':
+                return 'bg-green-500 hover:bg-green-400';
+            case 'idle':
+                return 'bg-yellow-500 hover:bg-yellow-400';
+            case 'error':
+                return 'bg-red-500 hover:bg-red-400';
+            case 'pending':
+                return 'bg-gray-500 hover:bg-gray-400';
+            default:
+                return 'bg-gray-500 hover:bg-gray-400';
+        }
+    };
+
+    const getStatusBadgeColor = (status) => {
+        switch (status) {
+            case 'running':
+                return 'bg-green-500/20 text-green-300';
+            case 'idle':
+                return 'bg-yellow-500/20 text-yellow-300';
+            case 'error':
+                return 'bg-red-500/20 text-red-300';
+            case 'pending':
+                return 'bg-gray-500/20 text-gray-300';
+            default:
+                return 'bg-gray-500/20 text-gray-300';
+        }
+    };
+
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return 'N/A';
+        return new Date(timestamp).toLocaleString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    };
+
+    return (
+        <div className="min-h-screen bg-zinc-900 p-6">
+            {contextHolder}
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-white text-xl sm:text-2xl lg:text-3xl mb-6 font-semibold text-center">
-                    {selectedFactory ? selectedFactory.name.toUpperCase() : "Factory not found"}
-                </h1>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-                    {contextHolder}
-                    {selectedFactory.machines.map((m) => {
-                        // Use real-time status if available, otherwise use default
-                        const currentStatus = machineStatuses[m.id] || m.status;
-                        return (
-                            <div key={m.id} className="bg-zinc-800 rounded-xl p-4 hover:bg-zinc-700 transition-all duration-300">
-                                <div 
-                                    onClick={sendReloadMachine(m.name, m.id, m.status)} 
-                                    className={`w-full aspect-square mb-4 hover:shadow-lg hover:shadow-white/20 transition-all duration-300 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer ${
-                                        m.status === "error" ? "bg-red-500 hover:bg-red-400" : 
-                                        currentStatus === "running" ? "bg-green-400 hover:bg-green-300" : 
-                                        "bg-gray-500 hover:bg-gray-400"
-                                    }`}
-                                >
-                                    {currentStatus === "error" ? (
-                                        <PlayCircle size={60} className="text-gray-100 sm:w-16 sm:h-16 lg:w-20 lg:h-20" />
-                                    ) : null}
-                                </div>
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-white text-center mb-4">
+                        {factoryName.toUpperCase()} FACTORY
+                    </h1>
+                    
+                    {/* Statistics */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-zinc-800 rounded-lg p-4 text-center">
+                            <div className="text-2xl font-bold text-green-400">{runningCount}</div>
+                            <div className="text-sm text-gray-400">Running</div>
+                        </div>
+                        <div className="bg-zinc-800 rounded-lg p-4 text-center">
+                            <div className="text-2xl font-bold text-yellow-400">{idleCount}</div>
+                            <div className="text-sm text-gray-400">Idle</div>
+                        </div>
+                        <div className="bg-zinc-800 rounded-lg p-4 text-center">
+                            <div className="text-2xl font-bold text-red-400">{errorCount}</div>
+                            <div className="text-sm text-gray-400">Error</div>
+                        </div>
+                        <div className="bg-zinc-800 rounded-lg p-4 text-center">
+                            <div className="text-2xl font-bold text-gray-400">{pendingCount}</div>
+                            <div className="text-sm text-gray-400">Pending</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Machines Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {machines.map((machine) => (
+                        <div 
+                            key={machine.machineId} 
+                            className="bg-zinc-800 rounded-xl p-6 hover:bg-zinc-700 transition-all duration-300"
+                        >
+                            <div 
+                                onClick={() => handleMachineClick(machine)}
+                                className={`w-full aspect-square mb-4 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-white/20 ${getStatusColor(machine.status)}`}
+                            >
+                                {getStatusIcon(machine.status)}
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <h2 className="text-xl font-semibold text-white truncate">
+                                    {machine.machineId}
+                                </h2>
+                                
                                 <div className="space-y-2">
-                                    <h2 className="text-zinc-100 text-base sm:text-lg font-semibold truncate">{m.name}</h2>
-                                    <p className="text-zinc-300 text-sm">
-                                        <span className="font-medium">Status:</span> 
-                                        <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${
-                                            currentStatus === "error" ? "bg-red-500/20 text-red-300" :
-                                            currentStatus === "running" ? "bg-green-500/20 text-green-300" :
-                                            "bg-gray-500/20 text-gray-300"
-                                        }`}>
-                                            {currentStatus}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-400">Status:</span>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(machine.status)}`}>
+                                            {machine.status.toUpperCase()}
                                         </span>
-                                    </p>
-                                    {m.message && (
-                                        <p className="text-zinc-400 text-xs sm:text-sm">
-                                            <span className="font-medium">Message:</span> {m.message}
-                                        </p>
+                                    </div>
+                                    
+                                    {machine.error && (
+                                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                                            <p className="text-red-300 text-sm font-medium mb-1">Error:</p>
+                                            <p className="text-red-200 text-xs">{machine.error}</p>
+                                        </div>
                                     )}
+                                    
+                                    <div className="text-xs text-gray-500">
+                                        <span>Last Update:</span>
+                                        <br />
+                                        <span>{formatTimestamp(machine.timestamp)}</span>
+                                    </div>
                                 </div>
                             </div>
-                        )
-                    })}
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default StatusFactory;
