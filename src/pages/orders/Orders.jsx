@@ -1,8 +1,8 @@
 import { Button, Form, InputNumber, DatePicker, message, Spin, Table, Modal, Space, Tag, Empty } from 'antd';
 import { useState, useEffect } from 'react';
 import { PlusOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
-import '../index.css';
-import apiService from '../services/api';
+import '.././../index.css';
+import apiService from '../../services/api';
 import dayjs from 'dayjs';
 
 const { Item } = Form;
@@ -25,15 +25,15 @@ const Orders = () => {
       setTableLoading(true);
       const data = await apiService.getOrders();
       console.log('Fetched orders data:', data);
-      
+
       // Check if data is wrapped in a response object
-      const ordersList = Array.isArray(data) ? data : 
-                        data?.data ? data.data : 
-                        data?.orders ? data.orders : 
-                        [];
-      
+      const ordersList = Array.isArray(data) ? data :
+        data?.data ? data.data :
+          data?.orders ? data.orders :
+            [];
+
       console.log('Processed orders list:', ordersList);
-      
+
       // Ensure each order has required fields
       const validOrders = ordersList.filter(order => order && typeof order === 'object');
       setOrders(validOrders);
@@ -48,7 +48,7 @@ const Orders = () => {
 
   const handleCreateOrder = async (values) => {
     setLoading(true);
-    
+
     try {
       // Format the order data according to the API specification
       const orderData = {
@@ -61,10 +61,10 @@ const Orders = () => {
           }
         ]
       };
-      
+
       // Send the order to the API
       const response = await apiService.createOrder(orderData);
-      
+
       message.success('Order created successfully!');
       form.resetFields();
       setModalVisible(false);
@@ -180,8 +180,8 @@ const Orders = () => {
     <div className="min-h-screen bg-zinc-900 w-screen p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-zinc-100">Orders</h1>
-        <Button 
-          type="primary" 
+        <Button
+          type="primary"
           icon={<PlusOutlined />}
           onClick={() => setModalVisible(true)}
           style={{
@@ -270,8 +270,8 @@ const Orders = () => {
               />
             </Item>
 
-            <Item 
-              label={<span style={{ color: '#18181b' }}>Fulfilled Date</span>} 
+            <Item
+              label={<span style={{ color: '#18181b' }}>Fulfilled Date</span>}
               name="fullfiledDate"
             >
               <DatePicker

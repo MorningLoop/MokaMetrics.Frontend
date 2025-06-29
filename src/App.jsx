@@ -1,12 +1,14 @@
 import { Routes, BrowserRouter, Route } from "react-router-dom";
-import Orders from "./orders/Orders";
-import Dashboard from "./dashboard/Dashboard";
+
+import Dashboard from "./pages/dashboard/Dashboard";
 import StatusFactory from "./status/StatusFactory";
 import './index.css';
 import Layout from "./components/Layout";
-import Customers from "./customers/Customers";
+import Customers from "./pages/customers/Customers";
 import { useEffect, useState, createContext } from "react";
 import {initializeWebSocket, closeWebSocket} from "./providers/status/statusMachinesProvider";
+import Orders from "./pages/orders/Orders";
+import CreateNewOrder from "./pages/orders/CreateNewOrder";
 
 
 // Creo il contesto per gli stati delle macchine
@@ -15,22 +17,22 @@ export const StatusContext = createContext();
 export default function App() {
   const [statusMachines, setStatusMachines] = useState([
     // Factory 1 - Italy (4 macchine)
-    { machine_id: "CNC-01", status: "pending", factoryId: 1, error: null },
-    { machine_id: "CNC-02", status: "pending", factoryId: 1, error: null },
-    { machine_id: "CNC-03", status: "pending", factoryId: 1, error: null },
-    { machine_id: "CNC-04", status: "pending", factoryId: 1, error: null },
+    { id: "CNC-01", name: "Macchina CNC-01", status: "pending", factoryId: 1, error: null },
+    { id: "CNC-02", name: "Macchina CNC-02", status: "pending", factoryId: 1, error: null },
+    { id: "CNC-03", name: "Macchina CNC-03", status: "pending", factoryId: 1, error: null },
+    { id: "CNC-04", name: "Macchina CNC-04", status: "pending", factoryId: 1, error: null },
     
     // Factory 2 - Vietnam (4 macchine)
-    { machine_id: "LATHE-01", status: "pending", factoryId: 2, error: null },
-    { machine_id: "LATHE-02", status: "pending", factoryId: 2, error: null },
-    { machine_id: "LATHE-03", status: "pending", factoryId: 2, error: null },
-    { machine_id: "LATHE-04", status: "pending", factoryId: 2, error: null },
+    { id: "LATHE-01", name: "Macchina LATHE-01", status: "pending", factoryId: 2, error: null },
+    { id: "LATHE-02", name: "Macchina LATHE-02", status: "pending", factoryId: 2, error: null },
+    { id: "LATHE-03", name: "Macchina LATHE-03", status: "pending", factoryId: 2, error: null },
+    { id: "LATHE-04", name: "Macchina LATHE-04", status: "pending", factoryId: 2, error: null },
     
     // Factory 3 - Brasil (4 macchine)
-    { machine_id: "MILL-01",  status: "pending", factoryId: 3, error: null },
-    { machine_id: "MILL-02",  status: "pending", factoryId: 3, error: null },
-    { machine_id: "MILL-03",  status: "pending", factoryId: 3, error: null },
-    { machine_id: "MILL-04",  status: "pending", factoryId: 3, error: null }
+    { id: "MILL-01", name: "Macchina MILL-01", status: "pending", factoryId: 3, error: null },
+    { id: "MILL-02", name: "Macchina MILL-02", status: "pending", factoryId: 3, error: null },
+    { id: "MILL-03", name: "Macchina MILL-03", status: "pending", factoryId: 3, error: null },
+    { id: "MILL-04", name: "Macchina MILL-04", status: "pending", factoryId: 3, error: null }
   ]);
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function App() {
           
           newStatusData.forEach(newMachine => {
             const existingIndex = updatedMachines.findIndex(
-              machine => machine.machine_id === newMachine.machine_id
+              machine => machine.id === newMachine.id || machine.name === newMachine.name
             );
             
             if (existingIndex !== -1) {
@@ -71,7 +73,7 @@ export default function App() {
         setStatusMachines(prevMachines => {
           const updatedMachines = [...prevMachines];
           const existingIndex = updatedMachines.findIndex(
-            machine => machine.machine_id === newStatusData.machine_id
+            machine => machine.id === newStatusData.id || machine.name === newStatusData.name
           );
           
           if (existingIndex !== -1) {
@@ -109,6 +111,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout />} >
             <Route path="/orders" element={<Orders />} />
+            <Route path="/create-order" element={<CreateNewOrder />} />
             <Route index element={<Dashboard />} />
             <Route path="/status/:idFactory" element={<StatusFactory />} />
             <Route path="/customers" element={<Customers />} />
