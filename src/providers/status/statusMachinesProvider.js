@@ -1,72 +1,182 @@
-let socket = null;
+import * as signalR from "@microsoft/signalr";
+
+let connection = null;
 let onMessageCallback = null;
 
-export function initializeWebSocket(onStatusUpdate) {
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    return socket;
+export async function initializeSignalR(onStatusUpdate) {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    console.log("SignalR già connesso");
+    return connection;
   }
 
-  socket = new WebSocket("ws://localhost:5129/ws/status");
+  // Recupera l'URL dall'environment
+  const hubUrl = import.meta.env.VITE_APP_SIGNALR_HUB_URL;
+  console.log("Variabili environment disponibili:", import.meta.env);
+  console.log("Hub URL configurato dal .env:", hubUrl);
+  
+  if (!hubUrl) {
+    console.error("VITE_APP_SIGNALR_HUB_URL non trovato nelle variabili d'ambiente");
+    console.error("Verifica che il file .env contenga: VITE_APP_SIGNALR_HUB_URL=https://localhost:7218/productionHub");
+    return null;
+  }
+
   onMessageCallback = onStatusUpdate;
 
-  socket.addEventListener("open", event => {
-    console.log("WebSocket connesso");
+  // Creazione connessione seguendo l'esempio fornito
+  connection = new signalR.HubConnectionBuilder()
+    .withUrl(hubUrl)
+    .withAutomaticReconnect()
+    .build();
+
+  // Event handlers
+  connection.onclose(() => {
+    console.log("SignalR connection closed");
   });
 
-  socket.addEventListener("message", event => {
-    console.log("Dati ricevuti dal server:", event.data);
-    try {
-      const statusData = JSON.parse(event.data);
+  connection.onreconnecting(() => {
+    console.log("SignalR reconnecting...");
+  });
 
-        const processedMachine = {
-          lot_code: statusData.lot_code || "N/A",
-          cycle_time: statusData.cycle_time || 0.0,
-          cutting_depth: statusData.cutting_depth || 0.0,
-          vibration: statusData.vibration || 0,
-          tool_alarms: statusData.tool_alarms || "None",
-          local_timestamp: statusData.local_timestamp || "",
-          utc_timestamp: statusData.utc_timestamp || "",
-          site: statusData.site || "Unknown",
-          machine_id: statusData.machine_id || "Unknown",
-          timestamp: statusData.timestamp || new Date().toISOString(),
-          status : statusData.status || "pending",
-        };
-        
-        if (onMessageCallback) {
-          onMessageCallback(processedMachine);
-        }
-      
-    } catch (error) {
-      console.error("Errore parsing dati WebSocket:", error);
-      console.error("Dati ricevuti:", event.data);
+  connection.onreconnected(() => {
+    console.log("SignalR reconnected");
+  });
+
+  // Handler per i diversi eventi
+  connection.on("lotCompleted", (args) => {
+    console.log("Lot completed:", args);
+    try {
+      const data = typeof args === 'string' ? JSON.parse(args) : args;
+      console.log("Lot completed parsed:", data);
+    } catch (e) {
+      console.log("Lot completed (raw):", args);
     }
   });
 
-  socket.addEventListener("close", event => {
-    console.log("WebSocket disconnesso");
-    // Riconnessione automatica dopo 3 secondi
-    setTimeout(() => {
+  connection.on("orderFulfilled", (args) => {
+    console.log("Order fulfilled:", args);
+    try {
+      const data = typeof args === 'string' ? JSON.parse(args) : args;
+      console.log("Order fulfilled parsed:", data);
+    } catch (e) {
+      console.log("Order fulfilled (raw):", args);
+    }
+  });
+
+  connection.on("status", (args) => {
+    console.log("🔄 Status update received:", args);
+    try {
+      const statusData = typeof args === 'string' ? JSON.parse(args) : args;
+      console.log("📊 Dati ricevuti:", statusData);
+      // Nuovo formato JSON: {location:str, machine:str, status:str, errormessage:str}
+      const processedMachine = {
+        location: statusData.location || "Unknown",
+        machine: statusData.machine || "Unknown", 
+        status: statusData.status || "pending",
+        errormessage: statusData.errormessage || "",
+        timestamp: new Date().toISOString(),
+      };
+      
       if (onMessageCallback) {
-        initializeWebSocket(onMessageCallback);
+        onMessageCallback(processedMachine);
       }
-    }, 3000);
+    } catch (error) {
+      console.error("❌ Errore processing dati SignalR status:", error);
+      console.error("Raw data received:", args);
+    }
   });
 
-  socket.addEventListener("error", error => {
-    console.error("Errore WebSocket:", error);
+  // Listener generico per catturare qualsiasi evento
+  connection.onclose((error) => {
+    console.log("SignalR connection closed", error);
   });
 
-  return socket;
+  connection.onreconnecting((error) => {
+    console.log("SignalR reconnecting...", error);
+  });
+
+  connection.onreconnected((connectionId) => {
+    console.log("SignalR reconnected with ID:", connectionId);
+  });
+
+  // Aggiungiamo altri possibili nomi di eventi
+  connection.on("StatusUpdate", (args) => {
+    console.log("🔄 StatusUpdate (PascalCase) received:", args);
+  });
+
+  connection.on("machineStatus", (args) => {
+    console.log("🔄 machineStatus received:", args);
+  });
+
+  connection.on("MachineStatusUpdate", (args) => {
+    console.log("🔄 MachineStatusUpdate received:", args);
+  });
+
+  connection.on("productionUpdate", (args) => {
+    console.log("🔄 productionUpdate received:", args);
+  });
+
+  connection.on("ProductionStatusUpdate", (args) => {
+    console.log("🔄 ProductionStatusUpdate received:", args);
+  });
+
+  // Avvio connessione
+  const startConnection = async () => {
+    try {
+      await connection.start();
+      console.log("SignalR hub connected successfully!");
+      console.log("Connection state:", connection.state);
+      console.log("Connection ID:", connection.connectionId);
+      
+      // Test per vedere se il server risponde
+      if (connection.invoke) {
+        try {
+          // Prova a invocare un metodo del hub se disponibile
+          console.log("Testing connection by sending ping...");
+          // Nota: questo metodo potrebbe non esistere, ma ci dirà se la connessione funziona
+        } catch (invokeError) {
+          console.log("Hub invoke test:", invokeError.message);
+        }
+      }
+      
+      return connection;
+    } catch (error) {
+      console.error("Errore connessione SignalR:", error);
+      console.error("Dettagli errore:", {
+        message: error.message,
+        stack: error.stack,
+        hubUrl: hubUrl
+      });
+      return null;
+    }
+  };
+
+  return await startConnection();
 }
 
-export function closeWebSocket() {
-  if (socket) {
-    socket.close();
-    socket = null;
+export async function closeSignalR() {
+  if (connection) {
+    await connection.stop();
+    connection = null;
     onMessageCallback = null;
   }
 }
 
+export function getStatusConnection() {
+  return connection;
+}
+
+// Manteniamo le vecchie funzioni per compatibilità, ma deprecate
+export function initializeWebSocket(onStatusUpdate) {
+  console.warn("initializeWebSocket è deprecata, usa initializeSignalR");
+  return initializeSignalR(onStatusUpdate);
+}
+
+export function closeWebSocket() {
+  console.warn("closeWebSocket è deprecata, usa closeSignalR");
+  return closeSignalR();
+}
+
 export function getStatusMachines() {
-  return socket;
+  console.warn("getStatusMachines è deprecata, usa getStatusConnection");
+  return getStatusConnection();
 }

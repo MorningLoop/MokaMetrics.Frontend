@@ -90,13 +90,12 @@ const CreateNewOrder = () => {
                 return;
             }
 
-            const orderToSubmit = {
-                id: 0,
-                name: values.name,
+            // Prepara il DTO secondo OrderWithLotsCreateDto
+            const orderDto = {
+                customerId: values.customerId,
                 quantityMachines: values.quantityMachines,
                 orderDate: values.orderDate ? values.orderDate.toISOString() : new Date().toISOString(),
                 deadline: values.deadline ? values.deadline.toISOString() : null,
-                fullfilledDate: values.fullfilledDate ? values.fullfilledDate.toISOString() : null,
                 lots: lots.map(lot => ({
                     name: lot.name,
                     quantity: parseInt(lot.quantity),
@@ -105,13 +104,29 @@ const CreateNewOrder = () => {
                 }))
             };
 
-            console.log('Order to submit:', orderToSubmit);
+            console.log('Order DTO to submit:', orderDto);
             
-            // Here you would make the API call to create the order
-            // await apiService.createOrder(orderToSubmit);
-            
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Chiamata API al server
+            const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
+            if (!apiBaseUrl) {
+                throw new Error('VITE_APP_API_BASE_URL non configurato nel file .env');
+            }
+
+            const response = await fetch(`${apiBaseUrl}/orders/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderDto)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || `Server error: ${response.status} ${response.statusText}`);
+            }
+
+            const createdOrder = await response.json();
+            console.log('Order created successfully:', createdOrder);
             
             api.success({
                 message: 'Successo',
@@ -125,8 +140,8 @@ const CreateNewOrder = () => {
             console.error('Error creating order:', error);
             api.error({
                 message: 'Errore',
-                description: 'Errore durante la creazione dell\'ordine',
-                duration: 3,
+                description: error.message || 'Errore durante la creazione dell\'ordine',
+                duration: 4,
             });
         } finally {
             setIsSubmitting(false);
@@ -156,7 +171,8 @@ const CreateNewOrder = () => {
                     onFinish={onFinish}
                     initialValues={{
                         orderDate: dayjs(),
-                        quantityMachines: 1
+                        quantityMachines: 1,
+                        customerId: 1
                     }}
                     className="space-y-6"
                 >
@@ -167,20 +183,33 @@ const CreateNewOrder = () => {
                             <h2 className="text-xl font-semibold text-white m-0">Informazioni Ordine</h2>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2">
                                 <Form.Item
                                     label={<span className="text-zinc-300">Nome Ordine</span>}
                                     name="name"
                                     rules={[{ required: true, message: 'Il nome dell\'ordine è obbligatorio' }]}
                                 >
-                                    <div className="dark-input">
-                                        <Input 
-                                            placeholder="Inserisci il nome dell'ordine"
-                                            size="large"
-                                            className="bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
+                                    <Input 
+                                        placeholder="Inserisci il nome dell'ordine"
+                                        size="large"
+                                        className="dark-input"
+                                    />
+                                </Form.Item>
+                            </div>
+
+                            <div>
+                                <Form.Item
+                                    label={<span className="text-zinc-300">Customer ID</span>}
+                                    name="customerId"
+                                    rules={[{ required: true, message: 'Il Customer ID è obbligatorio' }]}
+                                >
+                                    <InputNumber
+                                        placeholder="ID cliente"
+                                        min={1}
+                                        size="large"
+                                        className="w-full dark-input-number"
+                                    />
                                 </Form.Item>
                             </div>
                             
@@ -190,15 +219,12 @@ const CreateNewOrder = () => {
                                     name="quantityMachines"
                                     rules={[{ required: true, message: 'La quantità macchine è obbligatoria' }]}
                                 >
-                                    <div className="dark-input-number">
-                                        <InputNumber
-                                            placeholder="Numero di macchine"
-                                            min={1}
-                                            size="large"
-                                            className="w-full bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                            addonBefore={<BuildOutlined className="text-zinc-400 bg-zinc-800 border-zinc-700" />}
-                                        />
-                                    </div>
+                                    <InputNumber
+                                        placeholder="Numero macchine"
+                                        min={1}
+                                        size="large"
+                                        className="w-full dark-input-number"
+                                    />
                                 </Form.Item>
                             </div>
                             
@@ -208,48 +234,28 @@ const CreateNewOrder = () => {
                                     name="orderDate"
                                     rules={[{ required: true, message: 'La data ordine è obbligatoria' }]}
                                 >
-                                    <div className="dark-datepicker">
-                                        <DatePicker
-                                            placeholder="Seleziona data ordine"
-                                            size="large"
-                                            className="w-full bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                            suffixIcon={<CalendarOutlined className="text-zinc-400" />}
-                                        />
-                                    </div>
+                                    <DatePicker
+                                        placeholder="Data ordine"
+                                        size="large"
+                                        className="w-full dark-datepicker"
+                                        suffixIcon={<CalendarOutlined className="text-zinc-400" />}
+                                    />
                                 </Form.Item>
                             </div>
                             
                             <div>
                                 <Form.Item
-                                    label={<span className="text-zinc-300">Scadenza</span>}
+                                    label={<span className="text-zinc-300">Scadenza <span className="text-zinc-500 text-xs">(opzionale)</span></span>}
                                     name="deadline"
-                                    rules={[{ required: true, message: 'La scadenza è obbligatoria' }]}
+                                    required={false}
                                 >
-                                    <div className="dark-datepicker">
-                                        <DatePicker
-                                            placeholder="Seleziona scadenza"
-                                            size="large"
-                                            className="w-full bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                            suffixIcon={<ClockCircleOutlined className="text-zinc-400" />}
-                                        />
-                                    </div>
-                                </Form.Item>
-                            </div>
-                            
-                            <div>
-                                <Form.Item
-                                    label={<span className="text-zinc-300">Data Completamento</span>}
-                                    name="fullfilledDate"
-                                    rules={[{ required: true, message: 'La data completamento è obbligatoria' }]}
-                                >
-                                    <div className="dark-datepicker">
-                                        <DatePicker
-                                            placeholder="Seleziona data completamento"
-                                            size="large"
-                                            className="w-full bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                            suffixIcon={<CalendarOutlined className="text-zinc-400" />}
-                                        />
-                                    </div>
+                                    <DatePicker
+                                        placeholder="Scadenza (opzionale)"
+                                        size="large"
+                                        className="w-full dark-datepicker"
+                                        suffixIcon={<ClockCircleOutlined className="text-zinc-400" />}
+                                        allowClear
+                                    />
                                 </Form.Item>
                             </div>
                         </div>
@@ -301,63 +307,55 @@ const CreateNewOrder = () => {
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
                                                     Nome Lotto <span className="text-red-500">*</span>
                                                 </label>
-                                                <div className="dark-input">
-                                                    <Input
-                                                        placeholder="Nome del lotto"
-                                                        value={lot.name}
-                                                        onChange={(e) => updateLot(lot.id, 'name', e.target.value)}
-                                                        className="bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                                    />
-                                                </div>
+                                                <Input
+                                                    placeholder="Nome del lotto"
+                                                    value={lot.name}
+                                                    onChange={(e) => updateLot(lot.id, 'name', e.target.value)}
+                                                    className="dark-input"
+                                                />
                                             </div>
                                             
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
                                                     Quantità
                                                 </label>
-                                                <div className="dark-input-number">
-                                                    <InputNumber
-                                                        placeholder="Quantità"
-                                                        min={1}
-                                                        value={lot.quantity}
-                                                        onChange={(value) => updateLot(lot.id, 'quantity', value || 1)}
-                                                        className="w-full bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500"
-                                                    />
-                                                </div>
+                                                <InputNumber
+                                                    placeholder="Quantità"
+                                                    min={1}
+                                                    value={lot.quantity}
+                                                    onChange={(value) => updateLot(lot.id, 'quantity', value || 1)}
+                                                    className="w-full dark-input-number"
+                                                />
                                             </div>
 
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
                                                     Status
                                                 </label>
-                                                <div className="dark-select">
-                                                    <Select
-                                                        value={lot.status}
-                                                        onChange={(value) => updateLot(lot.id, 'status', value)}
-                                                        className="w-full"
-                                                        dropdownClassName="bg-zinc-700 border-zinc-600"
-                                                    >
-                                                        <Option value="pending">Pending</Option>
-                                                        <Option value="in-progress">In Progress</Option>
-                                                        <Option value="completed">Completed</Option>
-                                                        <Option value="cancelled">Cancelled</Option>
-                                                    </Select>
-                                                </div>
+                                                <Select
+                                                    value={lot.status}
+                                                    onChange={(value) => updateLot(lot.id, 'status', value)}
+                                                    className="w-full dark-select"
+                                                    dropdownClassName="dark-select-dropdown"
+                                                >
+                                                    <Option value="pending">Pending</Option>
+                                                    <Option value="in-progress">In Progress</Option>
+                                                    <Option value="completed">Completed</Option>
+                                                    <Option value="cancelled">Cancelled</Option>
+                                                </Select>
                                             </div>
                                             
                                             <div className="md:col-span-3">
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
                                                     Descrizione <span className="text-red-500">*</span>
                                                 </label>
-                                                <div className="dark-textarea">
-                                                    <TextArea
-                                                        placeholder="Descrizione del lotto..."
-                                                        value={lot.description}
-                                                        onChange={(e) => updateLot(lot.id, 'description', e.target.value)}
-                                                        rows={2}
-                                                        className="bg-zinc-950 border-zinc-700 text-white placeholder-white/70 hover:border-blue-500 focus:border-blue-500 resize-none"
-                                                    />
-                                                </div>
+                                                <TextArea
+                                                    placeholder="Descrizione del lotto..."
+                                                    value={lot.description}
+                                                    onChange={(e) => updateLot(lot.id, 'description', e.target.value)}
+                                                    rows={2}
+                                                    className="dark-textarea resize-none"
+                                                />
                                             </div>
                                         </div>
                                     </div>

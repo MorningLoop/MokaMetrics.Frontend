@@ -6,7 +6,7 @@ import './index.css';
 import Layout from "./components/Layout";
 import Customers from "./pages/customers/Customers";
 import { useEffect, useState, createContext } from "react";
-import {initializeWebSocket, closeWebSocket} from "./providers/status/statusMachinesProvider";
+import {initializeSignalR, closeSignalR} from "./providers/status/statusMachinesProvider";
 import Orders from "./pages/orders/Orders";
 import CreateNewOrder from "./pages/orders/CreateNewOrder";
 
@@ -36,72 +36,80 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    // Funzione callback per aggiornare il contesto quando arrivano dati WebSocket
+    // Funzione callback per aggiornare il contesto quando arrivano dati SignalR
     const handleStatusUpdate = (newStatusData) => {
-      console.log("Aggiornamento stati macchine:", newStatusData);
+      console.log("Aggiornamento stati macchine da SignalR:", newStatusData);
       
-      // Se newStatusData è un array, sostituisci/aggiorna tutto
-      if (Array.isArray(newStatusData)) {
-        setStatusMachines(prevMachines => {
-          const updatedMachines = [...prevMachines];
-          
-          newStatusData.forEach(newMachine => {
-            const existingIndex = updatedMachines.findIndex(
-              machine => machine.id === newMachine.id || machine.name === newMachine.name
-            );
-            
-            if (existingIndex !== -1) {
-              // Aggiorna macchina esistente
-              updatedMachines[existingIndex] = {
-                ...updatedMachines[existingIndex],
-                ...newMachine,
-                timestamp: new Date().toISOString()
-              };
-            } else {
-              // Aggiungi nuova macchina
-              updatedMachines.push({
-                ...newMachine,
-                timestamp: new Date().toISOString()
-              });
-            }
+      // Nuovo formato: {location:str, machine:str, status:str, errormessage:str}
+      setStatusMachines(prevMachines => {
+        const updatedMachines = [...prevMachines];
+        
+        // Trova la macchina per nome o ID
+        const existingIndex = updatedMachines.findIndex(
+          machine => machine.id === newStatusData.machine || 
+                    machine.name === newStatusData.machine ||
+                    machine.name.includes(newStatusData.machine)
+        );
+        
+        if (existingIndex !== -1) {
+          // Aggiorna macchina esistente
+          updatedMachines[existingIndex] = {
+            ...updatedMachines[existingIndex],
+            status: newStatusData.status,
+            error: newStatusData.errormessage || null,
+            location: newStatusData.location,
+            lastUpdate: new Date().toISOString()
+          };
+        } else {
+          // Aggiungi nuova macchina se non esiste
+          updatedMachines.push({
+            id: newStatusData.machine,
+            name: newStatusData.machine,
+            status: newStatusData.status,
+            error: newStatusData.errormessage || null,
+            location: newStatusData.location,
+            factoryId: getFactoryIdFromLocation(newStatusData.location),
+            lastUpdate: new Date().toISOString()
           });
-          
-          return updatedMachines;
-        });
-      } else {
-        // Se è un singolo oggetto, aggiorna solo quella macchina
-        setStatusMachines(prevMachines => {
-          const updatedMachines = [...prevMachines];
-          const existingIndex = updatedMachines.findIndex(
-            machine => machine.id === newStatusData.id || machine.name === newStatusData.name
-          );
-          
-          if (existingIndex !== -1) {
-            // Aggiorna macchina esistente
-            updatedMachines[existingIndex] = {
-              ...updatedMachines[existingIndex],
-              ...newStatusData,
-              timestamp: new Date().toISOString()
-            };
-          } else {
-            // Aggiungi nuova macchina
-            updatedMachines.push({
-              ...newStatusData,
-              timestamp: new Date().toISOString()
-            });
-          }
-          
-          return updatedMachines;
-        });
+        }
+        
+        return updatedMachines;
+      });
+    };
+
+    // Funzione helper per determinare factoryId dalla location
+    const getFactoryIdFromLocation = (location) => {
+      if (!location) return 1;
+      
+      const locationLower = location.toLowerCase();
+      if (locationLower.includes('italy') || locationLower.includes('italia')) return 1;
+      if (locationLower.includes('vietnam')) return 2;
+      if (locationLower.includes('brasil') || locationLower.includes('brazil')) return 3;
+      
+      return 1; // Default
+    };
+
+    // Inizializza SignalR
+    const initSignalR = async () => {
+      try {
+        console.log("Inizializzazione SignalR...");
+        const connection = await initializeSignalR(handleStatusUpdate);
+        if (connection) {
+          console.log("SignalR inizializzato con successo");
+        } else {
+          console.warn("SignalR non è riuscito a connettersi. L'app continuerà con dati mock.");
+        }
+      } catch (error) {
+        console.error("Errore inizializzazione SignalR:", error);
+        console.warn("L'app continuerà con dati mock.");
       }
     };
 
-    // Inizializza WebSocket
-    const socket = initializeWebSocket(handleStatusUpdate);
+    initSignalR();
 
     // Cleanup quando il componente viene smontato
     return () => {
-      closeWebSocket();
+      closeSignalR();
     };
   }, []);
 

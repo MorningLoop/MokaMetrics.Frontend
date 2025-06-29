@@ -1,16 +1,16 @@
 /* Custom styles for dark theme DatePicker */
-.dark-datepicker .ant-picker {
+.dark-datepicker {
   background-color: rgb(9, 9, 11) !important; /* zinc-950 */
   border-color: rgb(63, 63, 70) !important; /* zinc-700 */
   color: white !important;
 }
 
-.dark-datepicker .ant-picker:hover {
+.dark-datepicker:hover {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
 }
 
-.dark-datepicker .ant-picker:focus,
-.dark-datepicker .ant-picker.ant-picker-focused {
+.dark-datepicker:focus,
+.dark-datepicker.ant-picker-focused {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
 }
@@ -25,6 +25,10 @@
 }
 
 .dark-datepicker .ant-picker-suffix {
+  color: rgb(161, 161, 170) !important; /* zinc-400 */
+}
+
+.dark-datepicker .ant-picker-clear {
   color: rgb(161, 161, 170) !important; /* zinc-400 */
 }
 
@@ -71,77 +75,104 @@
 }
 
 /* Input dark theme */
-.dark-input .ant-input {
+.dark-input,
+.dark-input.ant-input {
   background-color: rgb(9, 9, 11) !important; /* zinc-950 */
   border-color: rgb(63, 63, 70) !important; /* zinc-700 */
   color: white !important;
 }
 
-.dark-input .ant-input:hover {
+.dark-input:hover,
+.dark-input.ant-input:hover {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
 }
 
-.dark-input .ant-input:focus,
-.dark-input .ant-input.ant-input-focused {
+.dark-input:focus,
+.dark-input.ant-input:focus,
+.dark-input.ant-input-focused {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
 }
 
-.dark-input .ant-input::placeholder {
+.dark-input::placeholder,
+.dark-input.ant-input::placeholder {
   color: rgba(255, 255, 255, 0.7) !important; /* white/70 */
 }
 
 /* TextArea dark theme */
-.dark-textarea .ant-input {
+.dark-textarea,
+.dark-textarea.ant-input {
   background-color: rgb(9, 9, 11) !important; /* zinc-950 */
   border-color: rgb(63, 63, 70) !important; /* zinc-700 */
   color: white !important;
 }
 
-.dark-textarea .ant-input:hover {
+.dark-textarea:hover,
+.dark-textarea.ant-input:hover {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
 }
 
-.dark-textarea .ant-input:focus,
-.dark-textarea .ant-input.ant-input-focused {
+.dark-textarea:focus,
+.dark-textarea.ant-input:focus,
+.dark-textarea.ant-input-focused {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
 }
 
-.dark-textarea .ant-input::placeholder {
+.dark-textarea::placeholder,
+.dark-textarea.ant-input::placeholder {
   color: rgba(255, 255, 255, 0.7) !important; /* white/70 */
 }
 
 /* Input number dark theme fixes */
-.dark-input-number .ant-input-number {
+.dark-input-number,
+.dark-input-number.ant-input-number {
   background-color: rgb(9, 9, 11) !important; /* zinc-950 */
   border-color: rgb(63, 63, 70) !important; /* zinc-700 */
   color: white !important;
+  width: 100% !important;
 }
 
-.dark-input-number .ant-input-number:hover {
+.dark-input-number:hover,
+.dark-input-number.ant-input-number:hover {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
 }
 
-.dark-input-number .ant-input-number:focus,
-.dark-input-number .ant-input-number.ant-input-number-focused {
+.dark-input-number:focus,
+.dark-input-number.ant-input-number:focus,
+.dark-input-number.ant-input-number-focused {
   border-color: rgb(59, 130, 246) !important; /* blue-500 */
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
 }
 
-.dark-input-number .ant-input-number-input {
+.dark-input-number .ant-input-number-input,
+.dark-input-number.ant-input-number .ant-input-number-input {
   background-color: transparent !important;
   color: white !important;
 }
 
-.dark-input-number .ant-input-number-input::placeholder {
+.dark-input-number .ant-input-number-input::placeholder,
+.dark-input-number.ant-input-number .ant-input-number-input::placeholder {
   color: rgba(255, 255, 255, 0.7) !important; /* white/70 */
 }
 
-.dark-input-number .ant-input-number-group-addon {
+.dark-input-number .ant-input-number-handler-wrap,
+.dark-input-number.ant-input-number .ant-input-number-handler-wrap {
   background-color: rgb(39, 39, 42) !important; /* zinc-800 */
+  border-left-color: rgb(63, 63, 70) !important; /* zinc-700 */
+}
+
+.dark-input-number .ant-input-number-handler,
+.dark-input-number.ant-input-number .ant-input-number-handler {
+  background-color: transparent !important;
   border-color: rgb(63, 63, 70) !important; /* zinc-700 */
   color: rgb(161, 161, 170) !important; /* zinc-400 */
+}
+
+.dark-input-number .ant-input-number-handler:hover,
+.dark-input-number.ant-input-number .ant-input-number-handler:hover {
+  background-color: rgb(59, 130, 246) !important; /* blue-500 */
+  color: white !important;
 }
 
 /* Select dark theme */
@@ -170,4 +201,24 @@
 
 .dark-select .ant-select-arrow {
   color: rgb(161, 161, 170) !important; /* zinc-400 */
+}
+
+/* Select dropdown dark theme */
+.dark-select-dropdown {
+  background-color: rgb(39, 39, 42) !important; /* zinc-800 */
+  border-color: rgb(63, 63, 70) !important; /* zinc-700 */
+}
+
+.dark-select-dropdown .ant-select-item {
+  color: rgb(212, 212, 216) !important; /* zinc-300 */
+}
+
+.dark-select-dropdown .ant-select-item:hover {
+  background-color: rgb(59, 130, 246) !important; /* blue-500 */
+  color: white !important;
+}
+
+.dark-select-dropdown .ant-select-item-option-selected {
+  background-color: rgb(59, 130, 246) !important; /* blue-500 */
+  color: white !important;
 }

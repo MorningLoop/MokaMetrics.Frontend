@@ -77,10 +77,11 @@ const StatusFactory = () => {
     };
 
     const handleMachineClick = (machine) => {
+        const machineName = machine.machineId || machine.machine || machine.id || machine.name;
         if (machine.status === "error") {
-            showRestartMessage(machine.machineId);
+            showRestartMessage(machineName);
         } else {
-            showOkMessage(machine.machineId);
+            showOkMessage(machineName);
         }
     };
 
@@ -174,47 +175,61 @@ const StatusFactory = () => {
 
                 {/* Machines Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {machines.map((machine) => (
-                        <div 
-                            key={machine.machineId} 
-                            className="bg-zinc-800 rounded-xl p-6 hover:bg-zinc-700 transition-all duration-300"
-                        >
+                    {machines.map((machine, index) => {
+                        const machineKey = machine.machineId || machine.machine || machine.id || machine.name || `machine-${index}`;
+                        const machineName = machine.machineId || machine.machine || machine.id || machine.name || `Machine ${index + 1}`;
+                        const machineError = machine.error || machine.errormessage;
+                        const machineTimestamp = machine.timestamp || machine.lastUpdate;
+                        
+                        return (
                             <div 
-                                onClick={() => handleMachineClick(machine)}
-                                className={`w-full aspect-square mb-4 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-white/20 ${getStatusColor(machine.status)}`}
+                                key={machineKey} 
+                                className="bg-zinc-800 rounded-xl p-6 hover:bg-zinc-700 transition-all duration-300"
                             >
-                                {getStatusIcon(machine.status)}
-                            </div>
-                            
-                            <div className="space-y-3">
-                                <h2 className="text-xl font-semibold text-white truncate">
-                                    {machine.machineId}
-                                </h2>
+                                <div 
+                                    onClick={() => handleMachineClick(machine)}
+                                    className={`w-full aspect-square mb-4 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-white/20 ${getStatusColor(machine.status)}`}
+                                >
+                                    {getStatusIcon(machine.status)}
+                                </div>
                                 
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-400">Status:</span>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(machine.status)}`}>
-                                            {machine.status.toUpperCase()}
-                                        </span>
-                                    </div>
+                                <div className="space-y-3">
+                                    <h2 className="text-xl font-semibold text-white truncate">
+                                        {machineName}
+                                    </h2>
                                     
-                                    {machine.error && (
-                                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                            <p className="text-red-300 text-sm font-medium mb-1">Error:</p>
-                                            <p className="text-red-200 text-xs">{machine.error}</p>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm text-gray-400">Status:</span>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(machine.status)}`}>
+                                                {machine.status.toUpperCase()}
+                                            </span>
                                         </div>
-                                    )}
-                                    
-                                    <div className="text-xs text-gray-500">
-                                        <span>Last Update:</span>
-                                        <br />
-                                        <span>{formatTimestamp(machine.timestamp)}</span>
+                                        
+                                        {machine.location && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm text-gray-400">Location:</span>
+                                                <span className="text-sm text-zinc-300">{machine.location}</span>
+                                            </div>
+                                        )}
+                                        
+                                        {machineError && (
+                                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                                                <p className="text-red-300 text-sm font-medium mb-1">Error:</p>
+                                                <p className="text-red-200 text-xs">{machineError}</p>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="text-xs text-gray-500">
+                                            <span>Last Update:</span>
+                                            <br />
+                                            <span>{formatTimestamp(machineTimestamp)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>
