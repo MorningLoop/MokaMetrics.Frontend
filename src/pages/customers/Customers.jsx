@@ -38,7 +38,7 @@ const Customers = () => {
         setDrawerVisible(true);
     }; 
 
-    const handleDelete = (customerId) => {
+    const handleDelete = async(customerId) => {
         console.log('handleDelete chiamata con ID:', customerId);
         modal.confirm({
             title: 'Sei sicuro di voler eliminare questo customer?',
@@ -48,10 +48,32 @@ const Customers = () => {
             okType: 'danger',
             onOk: () => {
                 console.log('Eliminando customer con ID:', customerId);
-                setCustomers(customers.filter(c => c.id !== customerId));
-                message.success('Customer eliminato con successo');
+
             },
         });
+
+        const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
+        try {
+            const response = await fetch(`${apiBaseUrl}/customers/${customerId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            console.log(response)
+            if (!response.ok) {
+                message.error(response.error);
+            }
+
+            const data = await response.json();
+            setCustomers(data);
+
+            setCustomers(customers.filter(c => c.id !== customerId));
+            message.success('Customer eliminato con successo');
+        } catch (error) {
+            console.error('Errore:', error);
+            message.error(error);
+        }
     }; 
     
     
