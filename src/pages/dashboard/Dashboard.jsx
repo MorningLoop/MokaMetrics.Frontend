@@ -22,7 +22,7 @@ import { TrendingUp, Package, Layers, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useStatusMachines } from "../../hooks/useStatusMachines";
 import RealTimeMachineStatus from "../../components/RealTimeMachineStatus";
-
+import { MachineStatuses } from "../../services/statusParser";
 
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -321,10 +321,10 @@ const StatusFactory = () => {
       </div>
       <div className="flex">
         {factoriesWithRealData.map(f => {
-          const runningCount = f.machines.filter(m => m.status === "running").length;
-          const errorCount = f.machines.filter(m => m.status === "error").length;
-          const idleCount = f.machines.filter(m => m.status === "idle").length;
-          const pendingCount = f.machines.filter(m => m.status === "pending").length;
+          const runningCount = f.machines.filter(m => m.status ===  MachineStatuses.Operational).length;
+          const errorCount = f.machines.filter(m => m.status ===  MachineStatuses.Alarm).length;
+          const idleCount = f.machines.filter(m => m.status ===  MachineStatuses.Idle).length;
+          const pendingCount = f.machines.filter(m => m.status ===  MachineStatuses.Idle).length;
           
           return (
             <div 

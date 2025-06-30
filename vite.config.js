@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
           secure: false,
         },
         "/productionHub": {
-          target: import.meta.env.VITE_APP_SIGNALR_HUB_URL,
+          target: env.VITE_APP_SIGNALR_HUB_URL,
           changeOrigin: true,
           secure: false,
         },

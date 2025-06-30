@@ -138,14 +138,6 @@ export function SignalRContextProvider({ children }) {
     conn.on("status", (args) => {
       const statusData = JSON.parse(args);
       console.log(statusData);
-      // Update machine status based on received data
-      setStatusMachines((prev) =>
-        prev.map((machine) =>
-          machine.id === statusData.machineId
-            ? { ...machine, status: statusData.status }
-            : machine
-        )
-      );
     });
 
     connectionRef.current = conn;

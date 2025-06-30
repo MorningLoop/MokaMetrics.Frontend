@@ -11,9 +11,6 @@ import CreateNewOrder from "./pages/orders/CreateNewOrder";
 import { SignalRContextProvider } from "./contexts/signalRContext";
 
 
-// Creo il contesto per gli stati delle macchine
-export const StatusContext = createContext();
-
 export default function App() {
   return (
     <SignalRContextProvider>
