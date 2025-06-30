@@ -123,7 +123,7 @@ const factory =
     },
     {
       id: 3,
-      name: "Brasil",
+      name: "Brazil",
       machines: [
         {
           name: "Macchina CNC2",
@@ -290,14 +290,25 @@ const StatusFactory = () => {
 
   // Raggruppa le macchine per factory se i dati hanno questa struttura
   const factoriesWithRealData = factory.map(f => {
-    // Filtra le macchine reali per questa factory (assumendo che abbiano un campo factoryId)
+    // Filtra le macchine reali per questa factory basandosi sul campo location
     const realMachines = statusMachines.filter(machine => 
-      machine.factoryId === f.id || machine.factoryName === f.name
+      machine.location && machine.location.toLowerCase() === f.name.toLowerCase()
     );
     
-    // Se ci sono dati reali, usa quelli, altrimenti crea macchine con stato "pending"
-    const machines = realMachines.length > 0 ? realMachines : 
-      f.machines.map(m => ({ ...m, status: getStatusEnum('pending') }));
+    // Crea sempre 4 macchine: usa i dati reali nei primi slot, poi riempi con "offline"
+    const machines = Array.from({ length: 4 }, (_, index) => {
+      // Se c'è una macchina reale per questo slot, usala
+      if (realMachines[index]) {
+        return realMachines[index];
+      } else {
+        // Altrimenti crea una macchina offline
+        return {
+          id: `${f.name.toLowerCase()}_machine_${index + 1}`,
+          name: `Macchina ${index + 1}`,
+          status: getStatusEnum('offline')
+        };
+      }
+    });
     
     return {
       ...f,
@@ -396,7 +407,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-  const [selectedPlant, setSelectedPlant] = useState("All Plants");
 
 
   useEffect(() => {
@@ -410,7 +420,6 @@ export default function Dashboard() {
       
       setKpi(prev => ({
         ...prev,
-        output: runningMachines * 15, // Esempio: ogni macchina running produce 15 unità
         alarms: errorMachines,
         // Se ci sono macchine pending, mostra che stiamo aspettando dati
         lots: pendingMachines > 0 ? `${orders.length} (${pendingMachines} pending)` : orders.length
@@ -426,29 +435,17 @@ export default function Dashboard() {
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold tracking-tight">Mekspresso</h1>
-          <select
-            value={selectedPlant}
-            onChange={(e) => setSelectedPlant(e.target.value)}
-            className="bg-zinc-800 text-zinc-100 p-2 rounded-lg"
-          >
-            <option>All Plants</option>
-            {plants.map((p) => (
-              <option key={p.name}>{p.name}</option>
-            ))}
-          </select>
         </header>
 
         {/* KPI Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KPI icon={Package} label="Output Today" value={kpi.output} />
-          <KPI icon={TrendingUp} label="OEE" value={`${kpi.oee}%`} />
+        <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
           <KPI icon={Layers} label="Active Lots" value={kpi.lots} />
           <KPI icon={Bell} label="Open Alarms" value={kpi.alarms} />
         </div>
 
         {/* Production Chart and status factory*/}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
-          <ProductionChart />
+        <div className="grid grid-cols-1 xl:grid-cols-1 gap-4 mb-6">
+
           <StatusFactory />
         </div>
 

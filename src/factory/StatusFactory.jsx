@@ -10,19 +10,18 @@ const StatusFactory = () => {
     // Utilizzo del contesto per i dati WebSocket
     const { statusMachines } = useStatusMachines();
     
-    // Trova la factory corrente e le sue macchine
-    const currentFactory = statusMachines.filter(machine => 
-        machine.factoryId === parseInt(idFactory)
-    );
-    
-    // Nomi delle factory
+    // Trova la factory corrente e le sue macchine basandosi su location
     const factoryNames = {
         1: "Italy",
         2: "Vietnam", 
-        3: "Brasil"
+        3: "Brazil"  // Corretto: era "Brasil"
     };
     
     const factoryName = factoryNames[parseInt(idFactory)] || `Factory ${idFactory}`;
+    
+    const currentFactory = statusMachines.filter(machine => 
+        machine.location && machine.location.toLowerCase() === factoryName.toLowerCase()
+    );
     
     // Se non ci sono macchine dal WebSocket, usa dati di fallback
     const defaultMachines = {
