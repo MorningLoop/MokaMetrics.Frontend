@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
+import { getStatusEnum } from "../services/statusParser";
 
 /**
  * @const SignalRContext
@@ -13,93 +14,105 @@ export const SignalRContext = React.createContext();
  */
 export function SignalRContextProvider({ children }) {
   const [statusMachines, setStatusMachines] = useState([
-    // Factory 1 - Brazil
+    // Factory 1 - Brazil  
     {
-      id: "cnc_brazil",
-      name: "CNC machine Brazil",
-      status: "pending",
+      id: "cnc_brazil_1",
+      name: "cnc_brazil_1", 
+      status: getStatusEnum("pending"),
       factoryId: 1,
+      location: "brazil",
       error: null,
     },
     {
-      id: "lathe_brazil",
-      name: "Lathe machine Brazil",
-      status: "pending",
+      id: "lathe_brazil_1",
+      name: "lathe_brazil_1",
+      status: getStatusEnum("pending"),
       factoryId: 1,
+      location: "brazil",
       error: null,
     },
     {
-      id: "assembly_brazil",
-      name: "Assembly machine Brazil",
-      status: "pending",
+      id: "mill_brazil_1",
+      name: "mill_brazil_1",
+      status: getStatusEnum("pending"),
       factoryId: 1,
+      location: "brazil",
       error: null,
     },
     {
-      id: "test_brazil",
-      name: "Test machine Brazil",
-      status: "pending",
+      id: "assembly_brazil_1",
+      name: "assembly_brazil_1",
+      status: getStatusEnum("pending"),
       factoryId: 1,
+      location: "brazil",
       error: null,
     },
 
     // Factory 2 - Italy
     {
-      id: "cnc_italy",
-      name: "CNC machine Italy",
-      status: "pending",
+      id: "cnc_italy_1",
+      name: "cnc_italy_1",
+      status: getStatusEnum("pending"),
       factoryId: 2,
+      location: "italy",
       error: null,
     },
     {
-      id: "lathe_italy",
-      name: "Lathe machine Italy",
-      status: "pending",
+      id: "lathe_italy_1",
+      name: "lathe_italy_1",
+      status: getStatusEnum("pending"),
       factoryId: 2,
+      location: "italy",
       error: null,
     },
     {
-      id: "assembly_italy",
-      name: "Assembly machine Italy",
-      status: "pending",
+      id: "mill_italy_1",
+      name: "mill_italy_1",
+      status: getStatusEnum("pending"),
       factoryId: 2,
+      location: "italy",
       error: null,
     },
     {
-      id: "test_italy",
-      name: "Test machine Italy",
-      status: "pending",
+      id: "assembly_italy_1",
+      name: "assembly_italy_1",
+      status: getStatusEnum("pending"),
       factoryId: 2,
+      location: "italy",
       error: null,
     },
 
     // Factory 3 - Vietnam
     {
-      id: "cnc_vietnam",
-      name: "CNC machine Vietnam",
-      status: "pending",
+      id: "cnc_vietnam_1",
+      name: "cnc_vietnam_1",
+      status: getStatusEnum("pending"),
       factoryId: 3,
+      location: "vietnam",
       error: null,
     },
     {
-      id: "lathe_vietnam",
-      name: "Lathe machine Vietnam",
-      status: "pending",
+      id: "lathe_vietnam_1",
+      name: "lathe_vietnam_1",
+      status: getStatusEnum("pending"),
       factoryId: 3,
+      location: "vietnam",
       error: null,
     },
     {
-      id: "assembly_vietnam",
-      name: "Assembly machine Vietnam",
-      status: "pending",
+      id: "mill_vietnam_1",
+      name: "mill_vietnam_1",
+      status: getStatusEnum("pending"),
       factoryId: 3,
+      location: "vietnam",
       error: null,
     },
     {
-      id: "test_vietnam",
-      name: "Test machine Vietnam",
-      status: "pending",
+      id: "assembly_vietnam_1",
+      name: "assembly_vietnam_1",
+      status: getStatusEnum("pending"),
       factoryId: 3,
+      location: "vietnam",
       error: null,
     },
   ]);
@@ -137,7 +150,45 @@ export function SignalRContextProvider({ children }) {
 
     conn.on("status", (args) => {
       const statusData = JSON.parse(args);
-      console.log(statusData);
+      console.log("Received status data:", statusData);
+      
+      // Mappa i campi dal formato backend al formato frontend
+      const mappedData = {
+        id: statusData.Machine || statusData.machine,
+        name: statusData.Machine || statusData.machine,
+        machineId: statusData.Machine || statusData.machine,
+        location: statusData.Location || statusData.location,
+        status: getStatusEnum(statusData.Status !== undefined ? statusData.Status : statusData.status),
+        error: statusData.ErrorMessage || statusData.errormessage || statusData.error,
+        factoryId: statusData.Location === "italy" ? 2 : statusData.Location === "vietnam" ? 3 : 1, // Map location to factoryId
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log("Mapped data:", mappedData);
+      
+      // Update machine status in the state
+      setStatusMachines(prevMachines => {
+        const existingMachineIndex = prevMachines.findIndex(machine => 
+          machine.id === mappedData.id || 
+          machine.name === mappedData.name ||
+          machine.machineId === mappedData.machineId ||
+          machine.id === mappedData.machineId
+        );
+        
+        if (existingMachineIndex !== -1) {
+          // Update existing machine
+          const updatedMachines = [...prevMachines];
+          updatedMachines[existingMachineIndex] = {
+            ...updatedMachines[existingMachineIndex],
+            ...mappedData
+          };
+          return updatedMachines;
+        } else {
+          // Add new machine if not found
+          console.log("Adding new machine:", mappedData);
+          return [...prevMachines, mappedData];
+        }
+      });
     });
 
     connectionRef.current = conn;

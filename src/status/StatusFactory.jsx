@@ -2,6 +2,7 @@ import { notification } from "antd";
 import { CheckCircle, PlayCircle, Circle, Loader2, AlertTriangle } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useStatusMachines } from "../hooks/useStatusMachines";
+import { MachineStatuses, getStatusEnum, getStatusString, getStatusColor, getStatusTextColor } from "../services/statusParser";
 
 const StatusFactory = () => {
     const { idFactory } = useParams();
@@ -26,22 +27,22 @@ const StatusFactory = () => {
     // Se non ci sono macchine dal WebSocket, usa dati di fallback
     const defaultMachines = {
         1: [
-            { machineId: "CNC-01", factoryId: 1, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "CNC-02", factoryId: 1, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "CNC-03", factoryId: 1, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "CNC-04", factoryId: 1, status: "pending", timestamp: new Date().toISOString() }
+            { machineId: "CNC-01", factoryId: 1, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "CNC-02", factoryId: 1, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "CNC-03", factoryId: 1, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "CNC-04", factoryId: 1, status: getStatusEnum("pending"), timestamp: new Date().toISOString() }
         ],
         2: [
-            { machineId: "LATHE-01", factoryId: 2, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "LATHE-02", factoryId: 2, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "LATHE-03", factoryId: 2, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "LATHE-04", factoryId: 2, status: "pending", timestamp: new Date().toISOString() }
+            { machineId: "LATHE-01", factoryId: 2, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "LATHE-02", factoryId: 2, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "LATHE-03", factoryId: 2, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "LATHE-04", factoryId: 2, status: getStatusEnum("pending"), timestamp: new Date().toISOString() }
         ],
         3: [
-            { machineId: "MILL-01", factoryId: 3, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "MILL-02", factoryId: 3, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "MILL-03", factoryId: 3, status: "pending", timestamp: new Date().toISOString() },
-            { machineId: "MILL-04", factoryId: 3, status: "pending", timestamp: new Date().toISOString() }
+            { machineId: "MILL-01", factoryId: 3, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "MILL-02", factoryId: 3, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "MILL-03", factoryId: 3, status: getStatusEnum("pending"), timestamp: new Date().toISOString() },
+            { machineId: "MILL-04", factoryId: 3, status: getStatusEnum("pending"), timestamp: new Date().toISOString() }
         ]
     };
     
@@ -49,10 +50,10 @@ const StatusFactory = () => {
                    (defaultMachines[parseInt(idFactory)] || []);
     
     // Statistiche
-    const runningCount = machines.filter(m => m.status === 'running').length;
-    const idleCount = machines.filter(m => m.status === 'idle').length;
-    const errorCount = machines.filter(m => m.status === 'error').length;
-    const pendingCount = machines.filter(m => m.status === 'pending').length;
+    const runningCount = machines.filter(m => m.status === MachineStatuses.Operational).length;
+    const idleCount = machines.filter(m => m.status === MachineStatuses.Idle).length;
+    const errorCount = machines.filter(m => m.status === MachineStatuses.Alarm).length;
+    const pendingCount = machines.filter(m => m.status === MachineStatuses.Offline).length;
     
     const [api, contextHolder] = notification.useNotification();
 
@@ -78,7 +79,7 @@ const StatusFactory = () => {
 
     const handleMachineClick = (machine) => {
         const machineName = machine.machineId || machine.machine || machine.id || machine.name;
-        if (machine.status === "error") {
+        if (machine.status === MachineStatuses.Alarm) {
             showRestartMessage(machineName);
         } else {
             showOkMessage(machineName);
@@ -87,29 +88,33 @@ const StatusFactory = () => {
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'running':
+            case MachineStatuses.Operational:
                 return <CheckCircle size={48} className="text-white" />;
-            case 'idle':
+            case MachineStatuses.Idle:
                 return <Circle size={48} className="text-white" />;
-            case 'error':
+            case MachineStatuses.Alarm:
                 return <AlertTriangle size={48} className="text-white" />;
-            case 'pending':
+            case MachineStatuses.Offline:
                 return <Loader2 size={48} className="text-white animate-spin" />;
+            case MachineStatuses.Maintenance:
+                return <PlayCircle size={48} className="text-white" />;
             default:
                 return <Circle size={48} className="text-white" />;
         }
     };
 
-    const getStatusColor = (status) => {
+    const getStatusColorLocal = (status) => {
         switch (status) {
-            case 'running':
+            case MachineStatuses.Operational:
                 return 'bg-green-500 hover:bg-green-400';
-            case 'idle':
-                return 'bg-yellow-500 hover:bg-yellow-400';
-            case 'error':
+            case MachineStatuses.Idle:
+                return 'bg-blue-500 hover:bg-blue-400';
+            case MachineStatuses.Alarm:
                 return 'bg-red-500 hover:bg-red-400';
-            case 'pending':
+            case MachineStatuses.Offline:
                 return 'bg-gray-500 hover:bg-gray-400';
+            case MachineStatuses.Maintenance:
+                return 'bg-yellow-500 hover:bg-yellow-400';
             default:
                 return 'bg-gray-500 hover:bg-gray-400';
         }
@@ -117,14 +122,16 @@ const StatusFactory = () => {
 
     const getStatusBadgeColor = (status) => {
         switch (status) {
-            case 'running':
+            case MachineStatuses.Operational:
                 return 'bg-green-500/20 text-green-300';
-            case 'idle':
-                return 'bg-yellow-500/20 text-yellow-300';
-            case 'error':
+            case MachineStatuses.Idle:
+                return 'bg-blue-500/20 text-blue-300';
+            case MachineStatuses.Alarm:
                 return 'bg-red-500/20 text-red-300';
-            case 'pending':
+            case MachineStatuses.Offline:
                 return 'bg-gray-500/20 text-gray-300';
+            case MachineStatuses.Maintenance:
+                return 'bg-yellow-500/20 text-yellow-300';
             default:
                 return 'bg-gray-500/20 text-gray-300';
         }
@@ -188,7 +195,7 @@ const StatusFactory = () => {
                             >
                                 <div 
                                     onClick={() => handleMachineClick(machine)}
-                                    className={`w-full aspect-square mb-4 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-white/20 ${getStatusColor(machine.status)}`}
+                                    className={`w-full aspect-square mb-4 rounded-xl border-2 border-zinc-600 flex items-center justify-center cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-white/20 ${getStatusColorLocal(machine.status)}`}
                                 >
                                     {getStatusIcon(machine.status)}
                                 </div>
@@ -202,7 +209,7 @@ const StatusFactory = () => {
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-gray-400">Status:</span>
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(machine.status)}`}>
-                                                {machine.status.toUpperCase()}
+                                                {getStatusString(machine.status)}
                                             </span>
                                         </div>
                                         

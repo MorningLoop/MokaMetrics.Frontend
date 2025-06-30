@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useStatusMachines } from '../hooks/useStatusMachines';
+import { MachineStatuses, getStatusEnum, getStatusString } from '../services/statusParser';
 
 export default function WebSocketTester() {
   const { statusMachines, setStatusMachines } = useStatusMachines();
   const [testMachine, setTestMachine] = useState({
     name: "Test-CNC-01",
-    status: "running",
+    status: getStatusEnum("running"),
     error: ""
   });
 
@@ -41,44 +42,44 @@ export default function WebSocketTester() {
     // Factory 1 - Italy
     {
       name: "CNC-01",
-      status: "running",
+      status: getStatusEnum("running"),
       error: null
     },
     {
       name: "CNC-02",
-      status: "error",
+      status: getStatusEnum("error"),
       error: "Temperatura troppo alta (95°C)"
     },
     {
       name: "CNC-03",
-      status: "idle",
+      status: getStatusEnum("idle"),
       error: null
     },
     {
       name: "CNC-04",
-      status: "error",
+      status: getStatusEnum("error"),
       error: "Vibrazione anomala rilevata"
     },
     // Factory 2 - Vietnam
     {
       name: "LATHE-01",
-      status: "running",
+      status: getStatusEnum("running"),
       error: null
     },
     {
       name: "LATHE-02",
-      status: "idle",
+      status: getStatusEnum("idle"),
       error: null
     },
     // Factory 3 - Brasil
     {
       name: "MILL-01",
-      status: "running",
+      status: getStatusEnum("running"),
       error: null
     },
     {
       name: "MILL-02",
-      status: "error",
+      status: getStatusEnum("error"),
       error: "Manutenzione richiesta"
     }
   ];
@@ -125,13 +126,14 @@ export default function WebSocketTester() {
         
         <select
           value={testMachine.status}
-          onChange={(e) => setTestMachine(prev => ({ ...prev, status: e.target.value }))}
+          onChange={(e) => setTestMachine(prev => ({ ...prev, status: parseInt(e.target.value) }))}
           className="bg-zinc-700 text-white p-2 rounded"
         >
-          <option value="running">Running</option>
-          <option value="idle">Idle</option>
-          <option value="error">Error</option>
-          <option value="pending">Pending</option>
+          <option value={MachineStatuses.Operational}>Operational</option>
+          <option value={MachineStatuses.Idle}>Idle</option>
+          <option value={MachineStatuses.Alarm}>Alarm</option>
+          <option value={MachineStatuses.Maintenance}>Maintenance</option>
+          <option value={MachineStatuses.Offline}>Offline</option>
         </select>
         
         <input
@@ -140,7 +142,7 @@ export default function WebSocketTester() {
           value={testMachine.error}
           onChange={(e) => setTestMachine(prev => ({ ...prev, error: e.target.value }))}
           className="bg-zinc-700 text-white p-2 rounded"
-          disabled={testMachine.status !== 'error'}
+          disabled={testMachine.status !== MachineStatuses.Alarm}
         />
         
         <button
@@ -160,13 +162,13 @@ export default function WebSocketTester() {
               key={index}
               onClick={() => runPresetTest(preset)}
               className={`px-3 py-1 rounded text-xs font-medium ${
-                preset.status === 'running' ? 'bg-green-600 hover:bg-green-700' :
-                preset.status === 'error' ? 'bg-red-600 hover:bg-red-700' :
-                preset.status === 'idle' ? 'bg-yellow-600 hover:bg-yellow-700' :
+                preset.status === MachineStatuses.Operational ? 'bg-green-600 hover:bg-green-700' :
+                preset.status === MachineStatuses.Alarm ? 'bg-red-600 hover:bg-red-700' :
+                preset.status === MachineStatuses.Idle ? 'bg-blue-600 hover:bg-blue-700' :
                 'bg-orange-600 hover:bg-orange-700'
               } text-white`}
             >
-              {preset.name} - {preset.status}
+              {preset.name} - {getStatusString(preset.status)}
             </button>
           ))}
         </div>
@@ -179,11 +181,11 @@ export default function WebSocketTester() {
           {statusMachines.map(machine => (
             <div key={machine.id} className="mb-1">
               {machine.name}: <span className={
-                machine.status === 'running' ? 'text-green-400' :
-                machine.status === 'error' ? 'text-red-400' :
-                machine.status === 'idle' ? 'text-yellow-400' :
+                machine.status === MachineStatuses.Operational ? 'text-green-400' :
+                machine.status === MachineStatuses.Alarm ? 'text-red-400' :
+                machine.status === MachineStatuses.Idle ? 'text-blue-400' :
                 'text-orange-400'
-              }>{machine.status}</span>
+              }>{getStatusString(machine.status)}</span>
               {machine.error && <span className="text-red-300"> - {machine.error}</span>}
             </div>
           ))}
