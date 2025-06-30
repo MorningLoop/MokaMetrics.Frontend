@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useStatusMachines } from '../hooks/useStatusMachines';
+import { MachineStatuses, getStatusString } from '../services/statusParser';
 
 export default function RealTimeMachineStatus() {
   const { statusMachines } = useStatusMachines();
@@ -16,10 +17,10 @@ export default function RealTimeMachineStatus() {
     );
   }
 
-  const runningMachines = statusMachines.filter(m => m.status === 'running');
-  const idleMachines = statusMachines.filter(m => m.status === 'idle');
-  const errorMachines = statusMachines.filter(m => m.status === 'error');
-  const pendingMachines = statusMachines.filter(m => m.status === 'pending');
+  const runningMachines = statusMachines.filter(m => m.status === MachineStatuses.Operational);
+  const idleMachines = statusMachines.filter(m => m.status === MachineStatuses.Idle);
+  const errorMachines = statusMachines.filter(m => m.status === MachineStatuses.Alarm);
+  const pendingMachines = statusMachines.filter(m => m.status === MachineStatuses.Offline);
 
   return (
     <div className="bg-zinc-800 rounded-2xl p-4">
@@ -78,10 +79,11 @@ export default function RealTimeMachineStatus() {
                 <div className="flex items-center gap-3">
                   <div 
                     className={`w-3 h-3 rounded-full ${
-                      machine.status === 'running' ? 'bg-green-500' :
-                      machine.status === 'idle' ? 'bg-yellow-500' :
-                      machine.status === 'error' ? 'bg-red-500' :
-                      'bg-orange-500 animate-pulse'
+                      machine.status === MachineStatuses.Operational ? 'bg-green-500' :
+                      machine.status === MachineStatuses.Idle ? 'bg-blue-500' :
+                      machine.status === MachineStatuses.Alarm ? 'bg-red-500' :
+                      machine.status === MachineStatuses.Maintenance ? 'bg-yellow-500' :
+                      'bg-gray-500 animate-pulse'
                     }`}
                   />
                   <span className="text-white font-medium">
@@ -110,13 +112,14 @@ export default function RealTimeMachineStatus() {
                   )}
                   <span 
                     className={`px-2 py-1 rounded text-xs font-medium ${
-                      machine.status === 'running' ? 'bg-green-500/20 text-green-400' :
-                      machine.status === 'idle' ? 'bg-yellow-500/20 text-yellow-400' :
-                      machine.status === 'error' ? 'bg-red-500/20 text-red-400' :
-                      'bg-orange-500/20 text-orange-400'
+                      machine.status === MachineStatuses.Operational ? 'bg-green-500/20 text-green-400' :
+                      machine.status === MachineStatuses.Idle ? 'bg-blue-500/20 text-blue-400' :
+                      machine.status === MachineStatuses.Alarm ? 'bg-red-500/20 text-red-400' :
+                      machine.status === MachineStatuses.Maintenance ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-gray-500/20 text-gray-400'
                     }`}
                   >
-                    {machine.status.toUpperCase()}
+                    {getStatusString(machine.status)}
                   </span>
                 </div>
               </div>

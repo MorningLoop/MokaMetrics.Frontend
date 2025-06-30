@@ -222,3 +222,7 @@
   background-color: rgb(59, 130, 246) !important; /* blue-500 */
   color: white !important;
 }
+
+.inputnumber-fix{
+  color: white !important;
+}

@@ -1,4 +1,5 @@
 import * as signalR from "@microsoft/signalr";
+import { getStatusEnum } from "../../services/statusParser";
 
 let connection = null;
 let onMessageCallback = null;
@@ -67,12 +68,12 @@ export async function initializeSignalR(onStatusUpdate) {
     try {
       const statusData = typeof args === 'string' ? JSON.parse(args) : args;
       console.log("📊 Dati ricevuti:", statusData);
-      // Nuovo formato JSON: {location:str, machine:str, status:str, errormessage:str}
+      // Formato JSON ricevuto: {Location:str, Machine:str, Status:number, ErrorMessage:str}
       const processedMachine = {
-        location: statusData.location || "Unknown",
-        machine: statusData.machine || "Unknown", 
-        status: statusData.status || "pending",
-        errormessage: statusData.errormessage || "",
+        location: statusData.Location || statusData.location || "Unknown",
+        machine: statusData.Machine || statusData.machine || "Unknown", 
+        status: getStatusEnum(statusData.Status !== undefined ? statusData.Status : statusData.status),
+        errormessage: statusData.ErrorMessage || statusData.errormessage || "",
         timestamp: new Date().toISOString(),
       };
       

@@ -22,7 +22,7 @@ import { TrendingUp, Package, Layers, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useStatusMachines } from "../../hooks/useStatusMachines";
 import RealTimeMachineStatus from "../../components/RealTimeMachineStatus";
-
+import { MachineStatuses, getStatusEnum, getStatusColor } from "../../services/statusParser";
 
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -82,20 +82,20 @@ const factory =
       machines: [
         {
           name: "Macchina CNC2",
-          status: "error"
+          status: getStatusEnum("error")
         },
         {
           name: "Macchina CNC3",
-          status: "error"
+          status: getStatusEnum("error")
         },
         {
           name: "Macchina CNC4",
-          status: "error"
+          status: getStatusEnum("error")
         }
         ,
         {
           name: "Macchina CNC4",
-          status: "idle"
+          status: getStatusEnum("idle")
         }
       ]
     },
@@ -105,19 +105,19 @@ const factory =
       machines: [
         {
           name: "Macchina CNC2",
-          status: "running"
+          status: getStatusEnum("running")
         },
         {
           name: "Macchina CNC3",
-          status: "idle"
+          status: getStatusEnum("idle")
         },
         {
           name: "Macchina CNC4",
-          status: "running"
+          status: getStatusEnum("running")
         },
         {
           name: "Macchina CNC4",
-          status: "error"
+          status: getStatusEnum("error")
         }
       ]
     },
@@ -127,19 +127,19 @@ const factory =
       machines: [
         {
           name: "Macchina CNC2",
-          status: "running"
+          status: getStatusEnum("running")
         },
         {
           name: "Macchina CNC3",
-          status: "idle"
+          status: getStatusEnum("idle")
         },
         {
           name: "Macchina CNC4",
-          status: "running"
+          status: getStatusEnum("running")
         },
         {
           name: "Macchina CNC4",
-          status: "error"
+          status: getStatusEnum("error")
         }
       ]
     }
@@ -297,7 +297,7 @@ const StatusFactory = () => {
     
     // Se ci sono dati reali, usa quelli, altrimenti crea macchine con stato "pending"
     const machines = realMachines.length > 0 ? realMachines : 
-      f.machines.map(m => ({ ...m, status: 'pending' }));
+      f.machines.map(m => ({ ...m, status: getStatusEnum('pending') }));
     
     return {
       ...f,
@@ -321,10 +321,10 @@ const StatusFactory = () => {
       </div>
       <div className="flex">
         {factoriesWithRealData.map(f => {
-          const runningCount = f.machines.filter(m => m.status === "running").length;
-          const errorCount = f.machines.filter(m => m.status === "error").length;
-          const idleCount = f.machines.filter(m => m.status === "idle").length;
-          const pendingCount = f.machines.filter(m => m.status === "pending").length;
+          const runningCount = f.machines.filter(m => m.status === MachineStatuses.Operational).length;
+          const errorCount = f.machines.filter(m => m.status === MachineStatuses.Alarm).length;
+          const idleCount = f.machines.filter(m => m.status === MachineStatuses.Idle).length;
+          const pendingCount = f.machines.filter(m => m.status === MachineStatuses.Offline).length;
           
           return (
             <div 
@@ -345,12 +345,7 @@ const StatusFactory = () => {
                   return (
                     <div 
                       key={m.id || index}
-                      className={`w-10 h-10 m-1 rounded ${
-                        m.status === "error" ? "bg-red-500" : 
-                        m.status === "running" ? "bg-green-400" : 
-                        m.status === "pending" ? "bg-orange-400 animate-pulse" :
-                        "bg-gray-500"
-                      }`}
+                      className={`w-10 h-10 m-1 rounded ${getStatusColor(m.status)}`}
                       title={`${m.name || `Macchina ${index + 1}`} - ${m.status}${m.error ? `: ${m.error}` : ''}`}
                     />
                   );
@@ -409,19 +404,19 @@ export default function Dashboard() {
     
     // Aggiorna i KPI basati sui dati delle macchine
     if (statusMachines && statusMachines.length > 0) {
-      const runningMachines = statusMachines.filter(m => m.status === 'running').length;
-      const errorMachines = statusMachines.filter(m => m.status === 'error').length;
-      const pendingMachines = statusMachines.filter(m => m.status === 'pending').length;
+      const runningMachines = statusMachines.filter(m => m.status === MachineStatuses.Operational).length;
+      const errorMachines = statusMachines.filter(m => m.status === MachineStatuses.Alarm).length;
+      const pendingMachines = statusMachines.filter(m => m.status === MachineStatuses.Offline).length;
       
       setKpi(prev => ({
         ...prev,
         output: runningMachines * 15, // Esempio: ogni macchina running produce 15 unità
         alarms: errorMachines,
         // Se ci sono macchine pending, mostra che stiamo aspettando dati
-        lots: pendingMachines > 0 ? `${prev.lots} (${pendingMachines} pending)` : prev.lots
+        lots: pendingMachines > 0 ? `${orders.length} (${pendingMachines} pending)` : orders.length
       }));
     }
-  }, [statusMachines]);
+  }, [statusMachines, orders]);
 
 
 

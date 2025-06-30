@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Form, 
@@ -35,6 +35,28 @@ const { TextArea } = Input;
 const { Option } = Select;
 
 const CreateNewOrder = () => {
+    const [industrialFacilities, setIndustrialFacilities] = useState([]);
+
+    const fetchIndustrialFacilities = async () => {
+        const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
+        const response = await fetch(`${apiBaseUrl}/industrialFacilities`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+
+        });
+
+        setIndustrialFacilities(await response.json());
+    }
+
+    useEffect(() => {
+        fetchIndustrialFacilities();
+
+    }, [])
+
+
+
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [api, contextHolder] = notification.useNotification();
@@ -58,9 +80,11 @@ const CreateNewOrder = () => {
     };
 
     const updateLot = (lotId, field, value) => {
+        console.log(`Updating lot ${lotId} field ${field} with value:`, value);
         setLots(prev => prev.map(lot => 
             lot.id === lotId ? { ...lot, [field]: value } : lot
         ));
+
     };
 
     const onFinish = async (values) => {
@@ -78,17 +102,6 @@ const CreateNewOrder = () => {
                 return;
             }
 
-            // Validazione per assicurarsi che tutti i lotti abbiano i campi obbligatori
-            const invalidLots = lots.filter(lot => !lot.name.trim() || !lot.description.trim());
-            if (invalidLots.length > 0) {
-                api.error({
-                    message: 'Errore di Validazione',
-                    description: 'Tutti i lotti devono avere un nome e una descrizione',
-                    duration: 4,
-                });
-                setIsSubmitting(false);
-                return;
-            }
 
             // Prepara il DTO secondo OrderWithLotsCreateDto
             const orderDto = {
@@ -97,10 +110,9 @@ const CreateNewOrder = () => {
                 orderDate: values.orderDate ? values.orderDate.toISOString() : new Date().toISOString(),
                 deadline: values.deadline ? values.deadline.toISOString() : null,
                 lots: lots.map(lot => ({
-                    name: lot.name,
-                    quantity: parseInt(lot.quantity),
-                    description: lot.description,
-                    status: lot.status
+                    totalQuantity: parseInt(lot.totalQuantity),
+                    startDate: new Date().toISOString(),
+                    industrialFacilityId: lot.industrialFacilityId
                 }))
             };
 
@@ -111,6 +123,9 @@ const CreateNewOrder = () => {
             if (!apiBaseUrl) {
                 throw new Error('VITE_APP_API_BASE_URL non configurato nel file .env');
             }
+
+
+            
 
             const response = await fetch(`${apiBaseUrl}/orders/`, {
                 method: 'POST',
@@ -125,8 +140,8 @@ const CreateNewOrder = () => {
                 throw new Error(errorData?.message || `Server error: ${response.status} ${response.statusText}`);
             }
 
-            const createdOrder = await response.json();
-            console.log('Order created successfully:', createdOrder);
+   
+            console.log('Order created successfully:');
             
             api.success({
                 message: 'Successo',
@@ -134,7 +149,7 @@ const CreateNewOrder = () => {
                 duration: 3,
             });
             
-            navigate('/orders');
+        
             
         } catch (error) {
             console.error('Error creating order:', error);
@@ -305,57 +320,32 @@ const CreateNewOrder = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                                    Nome Lotto <span className="text-red-500">*</span>
-                                                </label>
-                                                <Input
-                                                    placeholder="Nome del lotto"
-                                                    value={lot.name}
-                                                    onChange={(e) => updateLot(lot.id, 'name', e.target.value)}
-                                                    className="dark-input"
-                                                />
-                                            </div>
-                                            
-                                            <div>
-                                                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                                    Quantità
+                                                    Quantità Totale <span className="text-red-500">*</span>
                                                 </label>
                                                 <InputNumber
-                                                    placeholder="Quantità"
-                                                    min={1}
-                                                    value={lot.quantity}
-                                                    onChange={(value) => updateLot(lot.id, 'quantity', value || 1)}
-                                                    className="w-full dark-input-number"
+                                                    placeholder="20"
+                                                    value={lot.totalQuantity}
+                                                    onChange={(e) => updateLot(lot.id, 'totalQuantity', e)}
+                                                    className=""
                                                 />
                                             </div>
-
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                                    Status
+                                                    Industria <span className="text-red-500">*</span>
                                                 </label>
                                                 <Select
-                                                    value={lot.status}
-                                                    onChange={(value) => updateLot(lot.id, 'status', value)}
-                                                    className="w-full dark-select"
-                                                    dropdownClassName="dark-select-dropdown"
-                                                >
-                                                    <Option value="pending">Pending</Option>
-                                                    <Option value="in-progress">In Progress</Option>
-                                                    <Option value="completed">Completed</Option>
-                                                    <Option value="cancelled">Cancelled</Option>
+                                                    placeholder="Seleziona Industria"
+                                                    value={lot.industrialFacilityId}
+                                                    onChange={(value) => updateLot(lot.id, 'industrialFacilityId', value)}
+                                                    className="w-full dark-select">
+                                                        {industrialFacilities.map((i) => (
+                                                            <Option key={i.id} value={i.id}>
+                                                                {i.name}
+                                                            </Option>
+                                                        ))}
                                                 </Select>
-                                            </div>
-                                            
-                                            <div className="md:col-span-3">
-                                                <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                                    Descrizione <span className="text-red-500">*</span>
-                                                </label>
-                                                <TextArea
-                                                    placeholder="Descrizione del lotto..."
-                                                    value={lot.description}
-                                                    onChange={(e) => updateLot(lot.id, 'description', e.target.value)}
-                                                    rows={2}
-                                                    className="dark-textarea resize-none"
-                                                />
                                             </div>
                                         </div>
                                     </div>

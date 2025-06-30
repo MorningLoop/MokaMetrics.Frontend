@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useStatusMachines } from '../hooks/useStatusMachines';
+import { MachineStatuses, getStatusEnum, getStatusString } from '../services/statusParser';
 
 export default function MachineStatusList() {
   // Utilizzo l'hook per accedere al contesto
@@ -23,7 +24,7 @@ export default function MachineStatusList() {
     const newMachine = {
       id: Date.now(), // ID temporaneo
       name: `Macchina ${statusMachines.length + 1}`,
-      status: 'idle',
+      status: getStatusEnum('idle'),
       temperature: Math.floor(Math.random() * 100)
     };
     
@@ -61,22 +62,24 @@ export default function MachineStatusList() {
               <div className="flex items-center gap-2">
                 <span 
                   className={`px-2 py-1 rounded text-sm ${
-                    machine.status === 'running' ? 'bg-green-100 text-green-800' :
-                    machine.status === 'idle' ? 'bg-yellow-100 text-yellow-800' :
+                    machine.status === MachineStatuses.Operational ? 'bg-green-100 text-green-800' :
+                    machine.status === MachineStatuses.Idle ? 'bg-blue-100 text-blue-800' :
                     'bg-red-100 text-red-800'
                   }`}
                 >
-                  {machine.status}
+                  {getStatusString(machine.status)}
                 </span>
                 
                 <select 
                   value={machine.status}
-                  onChange={(e) => updateMachineStatus(machine.id, e.target.value)}
+                  onChange={(e) => updateMachineStatus(machine.id, getStatusEnum(e.target.value))}
                   className="ml-2 px-2 py-1 border rounded text-sm"
                 >
-                  <option value="running">Running</option>
-                  <option value="idle">Idle</option>
-                  <option value="error">Error</option>
+                  <option value={MachineStatuses.Operational}>Operational</option>
+                  <option value={MachineStatuses.Idle}>Idle</option>
+                  <option value={MachineStatuses.Alarm}>Alarm</option>
+                  <option value={MachineStatuses.Maintenance}>Maintenance</option>
+                  <option value={MachineStatuses.Offline}>Offline</option>
                 </select>
               </div>
             </div>
