@@ -13,11 +13,11 @@ export default defineConfig(({ mode }) => {
       port: parseInt(env.PORT),
       proxy: {
         "/api": {
-          target:
-            "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net",
+          target: "http://localhost:5129",
+            /*"https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net",*/
           changeOrigin: true,
           // Don't rewrite the path - keep /api prefix
-          secure: false,
+          secure: false,//<-- DA METTERE TRUE IN PRODUZIONE
         },
         "/productionHub": {
           target: env.VITE_APP_SIGNALR_HUB_URL,

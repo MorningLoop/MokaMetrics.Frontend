@@ -14,9 +14,9 @@ const Customers = () => {
     };
 
     const fetchCustomers = async () => {
-        const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
+        
         try {
-            const response = await fetch(`${apiBaseUrl}/customers`);
+            const response = await fetch(`/api/customers`);
             if (!response.ok) {
                 throw new Error('Errore durante il recupero dei customers');
             }
@@ -52,9 +52,9 @@ const Customers = () => {
             },
         });
 
-        const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
+        
         try {
-            const response = await fetch(`${apiBaseUrl}/customers/${customerId}`, {
+            const response = await fetch(`/api/customers/${customerId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,8 +93,8 @@ const Customers = () => {
             setCustomers([...customers, newCustomer]);
             
 
-            const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
-            const response = await fetch(`${apiBaseUrl}/customers`, {
+            
+            const response = await fetch(`/api/customers`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

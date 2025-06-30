@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
+import { notification } from "antd";
+import { CheckCircleOutlined } from "@ant-design/icons";
 import { getStatusEnum } from "../services/statusParser";
 
 /**
@@ -15,106 +17,8 @@ export const SignalRContext = React.createContext();
 export function SignalRContextProvider({ children }) {
   const [statusMachines, setStatusMachines] = useState([
     // Factory 1 - Brazil  
-    {
-      id: "cnc_brazil_1",
-      name: "cnc_brazil_1", 
-      status: getStatusEnum("pending"),
-      factoryId: 1,
-      location: "brazil",
-      error: null,
-    },
-    {
-      id: "lathe_brazil_1",
-      name: "lathe_brazil_1",
-      status: getStatusEnum("pending"),
-      factoryId: 1,
-      location: "brazil",
-      error: null,
-    },
-    {
-      id: "mill_brazil_1",
-      name: "mill_brazil_1",
-      status: getStatusEnum("pending"),
-      factoryId: 1,
-      location: "brazil",
-      error: null,
-    },
-    {
-      id: "assembly_brazil_1",
-      name: "assembly_brazil_1",
-      status: getStatusEnum("pending"),
-      factoryId: 1,
-      location: "brazil",
-      error: null,
-    },
-
-    // Factory 2 - Italy
-    {
-      id: "cnc_italy_1",
-      name: "cnc_italy_1",
-      status: getStatusEnum("pending"),
-      factoryId: 2,
-      location: "italy",
-      error: null,
-    },
-    {
-      id: "lathe_italy_1",
-      name: "lathe_italy_1",
-      status: getStatusEnum("pending"),
-      factoryId: 2,
-      location: "italy",
-      error: null,
-    },
-    {
-      id: "mill_italy_1",
-      name: "mill_italy_1",
-      status: getStatusEnum("pending"),
-      factoryId: 2,
-      location: "italy",
-      error: null,
-    },
-    {
-      id: "assembly_italy_1",
-      name: "assembly_italy_1",
-      status: getStatusEnum("pending"),
-      factoryId: 2,
-      location: "italy",
-      error: null,
-    },
-
-    // Factory 3 - Vietnam
-    {
-      id: "cnc_vietnam_1",
-      name: "cnc_vietnam_1",
-      status: getStatusEnum("pending"),
-      factoryId: 3,
-      location: "vietnam",
-      error: null,
-    },
-    {
-      id: "lathe_vietnam_1",
-      name: "lathe_vietnam_1",
-      status: getStatusEnum("pending"),
-      factoryId: 3,
-      location: "vietnam",
-      error: null,
-    },
-    {
-      id: "mill_vietnam_1",
-      name: "mill_vietnam_1",
-      status: getStatusEnum("pending"),
-      factoryId: 3,
-      location: "vietnam",
-      error: null,
-    },
-    {
-      id: "assembly_vietnam_1",
-      name: "assembly_vietnam_1",
-      status: getStatusEnum("pending"),
-      factoryId: 3,
-      location: "vietnam",
-      error: null,
-    },
+   
+    
   ]);
 
   const connectionRef = useRef(null);
@@ -145,7 +49,22 @@ export function SignalRContextProvider({ children }) {
     });
 
     conn.on("orderFulfilled", (args) => {
-      console.log(JSON.parse(args));
+      const orderData = JSON.parse(args);
+      console.log("Order fulfilled:", orderData);
+      
+      // Mostra notifica di successo
+      notification.success({
+        message: 'Ordine Completato!',
+        description: `L'ordine #${orderData.orderId || orderData.id || 'N/A'} è stato completato con successo.`,
+        icon: <CheckCircleOutlined style={{ color: '#14b8a6' }} />,
+        placement: 'topRight',
+        duration: 5,
+        style: {
+          backgroundColor: '#1f2937',
+          border: '1px solid #14b8a6',
+          color: '#ffffff'
+        }
+      });
     });
 
     conn.on("status", (args) => {

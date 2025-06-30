@@ -38,8 +38,8 @@ const CreateNewOrder = () => {
     const [industrialFacilities, setIndustrialFacilities] = useState([]);
 
     const fetchIndustrialFacilities = async () => {
-        const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
-        const response = await fetch(`${apiBaseUrl}/industrialFacilities`, {
+        
+        const response = await fetch(`api/industrialFacilities`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -118,16 +118,7 @@ const CreateNewOrder = () => {
 
             console.log('Order DTO to submit:', orderDto);
             
-            // Chiamata API al server
-            const apiBaseUrl = import.meta.env.VITE_APP_API_BASE_URL;
-            if (!apiBaseUrl) {
-                throw new Error('VITE_APP_API_BASE_URL non configurato nel file .env');
-            }
-
-
-            
-
-            const response = await fetch(`${apiBaseUrl}/orders/`, {
+            const response = await fetch(`/api/orders/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
