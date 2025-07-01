@@ -191,7 +191,6 @@ const CreateNewOrder = () => {
                     initialValues={{
                         orderDate: dayjs(),
                         quantityMachines: 1,
-                        customerId: 1
                     }}
                     className="space-y-6"
                 >

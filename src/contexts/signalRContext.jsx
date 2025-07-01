@@ -49,7 +49,7 @@ export function SignalRContextProvider({ children }) {
 
     conn.on("lotCompleted", (args) => {
       const orderData = JSON.parse(args);
-      console.log("Order fulfilled:", orderData);
+      console.log("lot completed:", orderData);
 
       // Mostra notifica di successo
       notification.success({
