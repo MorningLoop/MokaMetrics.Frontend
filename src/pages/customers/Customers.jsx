@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Card, Button, Drawer, Form, Input, Modal, message, Space } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-
+import { SignalRContext } from '../../contexts/signalRContext';
 const Customers = () => {
     const [customers, setCustomers] = useState([
     ]); const [drawerVisible, setDrawerVisible] = useState(false);
@@ -13,10 +13,12 @@ const Customers = () => {
         setDrawerVisible(true);
     };
 
+    const { API_BASE_URL } = useContext(SignalRContext);
+
     const fetchCustomers = async () => {
         
         try {
-            const response = await fetch(`/api/customers`);
+            const response = await fetch(`${API_BASE_URL}/api/customers`);
             if (!response.ok) {
                 throw new Error('Errore durante il recupero dei customers');
             }
@@ -52,9 +54,9 @@ const Customers = () => {
             },
         });
 
-        
+      
         try {
-            const response = await fetch(`/api/customers/${customerId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/customers/${customerId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -94,7 +96,7 @@ const Customers = () => {
             
 
             
-            const response = await fetch(`/api/customers`, {
+            const response = await fetch(`${API_BASE_URL}/api/customers`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

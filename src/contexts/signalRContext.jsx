@@ -21,6 +21,9 @@ export function SignalRContextProvider({ children }) {
 
   ]);
 
+  const API_BASE_URL = "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net";
+
+
   const connectionRef = useRef(null);
 
   const newSignalRConnection = () => {
@@ -167,6 +170,7 @@ export function SignalRContextProvider({ children }) {
   }, [connectionState]);
 
   const value = {
+    API_BASE_URL,
     statusMachines,
     setStatusMachines,
   };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Form,
@@ -29,16 +29,18 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import './CreateNewOrder.css';
-
+import { SignalRContext } from '../../contexts/signalRContext';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
 const CreateNewOrder = () => {
+    const { API_BASE_URL } = useContext(SignalRContext);
     const [industrialFacilities, setIndustrialFacilities] = useState([]);
     const [customers, setCustomers] = useState([]);
     const fetchCustomers = async () => {
-        const response = await fetch(`api/customers`, {
+        
+        const response = await fetch(`${API_BASE_URL}/api/customers`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -49,8 +51,8 @@ const CreateNewOrder = () => {
     }
 
     const fetchIndustrialFacilities = async () => {
-
-        const response = await fetch(`api/industrialFacilities`, {
+       
+        const response = await fetch(`${API_BASE_URL}/api/industrialFacilities`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -128,8 +130,8 @@ const CreateNewOrder = () => {
             };
 
             console.log('Order DTO to submit:', orderDto);
-
-            const response = await fetch(`/api/orders/`, {
+            
+            const response = await fetch(`${API_BASE_URL}/api/orders/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

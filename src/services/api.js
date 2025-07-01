@@ -45,6 +45,7 @@ class ApiService {
   // Orders endpoints
   async getOrders() {
     return this.request("/api/orders/");
+    console.log
   }
 
   async getOrderById(id) {
