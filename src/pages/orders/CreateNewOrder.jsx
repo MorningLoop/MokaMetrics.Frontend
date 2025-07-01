@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    Form, 
-    Input, 
-    InputNumber, 
-    DatePicker, 
-    Button, 
-    Card, 
-    Space, 
-    Typography, 
-    Divider, 
+import {
+    Form,
+    Input,
+    InputNumber,
+    DatePicker,
+    Button,
+    Card,
+    Space,
+    Typography,
+    Divider,
     Select,
     Row,
     Col,
@@ -17,10 +17,10 @@ import {
     notification,
     Spin
 } from 'antd';
-import { 
-    ArrowLeftOutlined, 
-    SaveOutlined, 
-    PlusOutlined, 
+import {
+    ArrowLeftOutlined,
+    SaveOutlined,
+    PlusOutlined,
     DeleteOutlined,
     InboxOutlined,
     BuildOutlined,
@@ -36,9 +36,20 @@ const { Option } = Select;
 
 const CreateNewOrder = () => {
     const [industrialFacilities, setIndustrialFacilities] = useState([]);
+    const [customers, setCustomers] = useState([]);
+    const fetchCustomers = async () => {
+        const response = await fetch(`api/customers`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        setCustomers(await response.json());
+    }
 
     const fetchIndustrialFacilities = async () => {
-        
+
         const response = await fetch(`api/industrialFacilities`, {
             method: 'GET',
             headers: {
@@ -52,7 +63,7 @@ const CreateNewOrder = () => {
 
     useEffect(() => {
         fetchIndustrialFacilities();
-
+        fetchCustomers();
     }, [])
 
 
@@ -60,7 +71,7 @@ const CreateNewOrder = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [api, contextHolder] = notification.useNotification();
-    
+
     const [lots, setLots] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -81,7 +92,7 @@ const CreateNewOrder = () => {
 
     const updateLot = (lotId, field, value) => {
         console.log(`Updating lot ${lotId} field ${field} with value:`, value);
-        setLots(prev => prev.map(lot => 
+        setLots(prev => prev.map(lot =>
             lot.id === lotId ? { ...lot, [field]: value } : lot
         ));
 
@@ -117,7 +128,7 @@ const CreateNewOrder = () => {
             };
 
             console.log('Order DTO to submit:', orderDto);
-            
+
             const response = await fetch(`/api/orders/`, {
                 method: 'POST',
                 headers: {
@@ -131,17 +142,17 @@ const CreateNewOrder = () => {
                 throw new Error(errorData?.message || `Server error: ${response.status} ${response.statusText}`);
             }
 
-   
+
             console.log('Order created successfully:');
-            
+
             api.success({
                 message: 'Successo',
                 description: 'Ordine creato con successo!',
                 duration: 3,
             });
-            
-        
-            
+
+
+
         } catch (error) {
             console.error('Error creating order:', error);
             api.error({
@@ -160,7 +171,7 @@ const CreateNewOrder = () => {
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
-                    <Button 
+                    <Button
                         icon={<ArrowLeftOutlined />}
                         onClick={() => navigate('/orders')}
                         size="large"
@@ -188,7 +199,7 @@ const CreateNewOrder = () => {
                             <InboxOutlined className="text-white text-xl" />
                             <h2 className="text-xl font-semibold text-white m-0">Informazioni Ordine</h2>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2">
                                 <Form.Item
@@ -196,7 +207,7 @@ const CreateNewOrder = () => {
                                     name="name"
                                     rules={[{ required: true, message: 'Il nome dell\'ordine è obbligatorio' }]}
                                 >
-                                    <Input 
+                                    <Input
                                         placeholder="Inserisci il nome dell'ordine"
                                         size="large"
                                         className="dark-input"
@@ -206,19 +217,25 @@ const CreateNewOrder = () => {
 
                             <div>
                                 <Form.Item
-                                    label={<span className="text-zinc-300">Customer ID</span>}
+                                    label={<span className="text-zinc-300">Customer</span>}
                                     name="customerId"
-                                    rules={[{ required: true, message: 'Il Customer ID è obbligatorio' }]}
+                                    rules={[{ required: true, message: 'Il Customer è obbligatorio' }]}
                                 >
-                                    <InputNumber
-                                        placeholder="ID cliente"
-                                        min={1}
-                                        size="large"
-                                        className="w-full dark-input-number"
-                                    />
+                                    <Select
+                                        size='large'
+                                        placeholder="ID Cliente"
+                                        className="w-full dark-select"
+                                        
+                                        >
+                                        {customers.map((i) => (
+                                            <Option key={i.id} value={i.id}>
+                                                {i.name}
+                                            </Option>
+                                        ))}
+                                    </Select>
                                 </Form.Item>
                             </div>
-                            
+
                             <div>
                                 <Form.Item
                                     label={<span className="text-zinc-300">Quantità Macchine</span>}
@@ -233,7 +250,7 @@ const CreateNewOrder = () => {
                                     />
                                 </Form.Item>
                             </div>
-                            
+
                             <div>
                                 <Form.Item
                                     label={<span className="text-zinc-300">Data Ordine</span>}
@@ -248,7 +265,7 @@ const CreateNewOrder = () => {
                                     />
                                 </Form.Item>
                             </div>
-                            
+
                             <div>
                                 <Form.Item
                                     label={<span className="text-zinc-300">Scadenza <span className="text-zinc-500 text-xs">(opzionale)</span></span>}
@@ -274,8 +291,8 @@ const CreateNewOrder = () => {
                                 <InboxOutlined className="text-white text-xl" />
                                 <h2 className="text-xl font-semibold text-white m-0">Lotti ({lots.length})</h2>
                             </div>
-                            <Button 
-                                type="primary" 
+                            <Button
+                                type="primary"
                                 icon={<PlusOutlined />}
                                 onClick={addLot}
                                 className="bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700"
@@ -286,7 +303,7 @@ const CreateNewOrder = () => {
 
                         {lots.length === 0 ? (
                             <div className="text-center py-12">
-                                <Empty 
+                                <Empty
                                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                                     description={<span className="text-zinc-400">Nessun lotto aggiunto. Clicca 'Aggiungi Lotto' per iniziare.</span>}
                                 />
@@ -299,15 +316,15 @@ const CreateNewOrder = () => {
                                             <h3 className="text-lg font-medium text-white">
                                                 Lotto #{index + 1}
                                             </h3>
-                                            <Button 
-                                                type="text" 
-                                                danger 
+                                            <Button
+                                                type="text"
+                                                danger
                                                 icon={<DeleteOutlined />}
                                                 onClick={() => removeLot(lot.id)}
                                                 className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                                             />
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
@@ -331,11 +348,11 @@ const CreateNewOrder = () => {
                                                     value={lot.industrialFacilityId}
                                                     onChange={(value) => updateLot(lot.id, 'industrialFacilityId', value)}
                                                     className="w-full dark-select">
-                                                        {industrialFacilities.map((i) => (
-                                                            <Option key={i.id} value={i.id}>
-                                                                {i.name}
-                                                            </Option>
-                                                        ))}
+                                                    {industrialFacilities.map((i) => (
+                                                        <Option key={i.id} value={i.id}>
+                                                            {i.name}
+                                                        </Option>
+                                                    ))}
                                                 </Select>
                                             </div>
                                         </div>
@@ -348,7 +365,7 @@ const CreateNewOrder = () => {
                     {/* Submit Buttons */}
                     <div className="bg-zinc-800 rounded-xl p-6 border border-zinc-700">
                         <div className="flex justify-end gap-4">
-                            <Button 
+                            <Button
                                 size="large"
                                 onClick={() => navigate('/orders')}
                                 className="bg-zinc-700 border-zinc-600 text-white hover:bg-zinc-600 hover:border-zinc-500"
@@ -356,8 +373,8 @@ const CreateNewOrder = () => {
                                 Annulla
                             </Button>
                             <Form.Item className="m-0">
-                                <Button 
-                                    type="primary" 
+                                <Button
+                                    type="primary"
                                     htmlType="submit"
                                     size="large"
                                     icon={<SaveOutlined />}

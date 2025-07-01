@@ -25,7 +25,7 @@ export function SignalRContextProvider({ children }) {
 
   const newSignalRConnection = () => {
     const conn = new signalR.HubConnectionBuilder()
-      .withUrl(import.meta.env.VITE_APP_SIGNALR_HUB_URL)
+      .withUrl("/productionHub")
       .withAutomaticReconnect()
       .build();
 

@@ -11,21 +11,12 @@ export async function initializeSignalR(onStatusUpdate) {
   }
 
   // Recupera l'URL dall'environment
-  const hubUrl = import.meta.env.VITE_APP_SIGNALR_HUB_URL;
-  console.log("Variabili environment disponibili:", import.meta.env);
-  console.log("Hub URL configurato dal .env:", hubUrl);
-  
-  if (!hubUrl) {
-    console.error("VITE_APP_SIGNALR_HUB_URL non trovato nelle variabili d'ambiente");
-    console.error("Verifica che il file .env contenga: VITE_APP_SIGNALR_HUB_URL=https://localhost:7218/productionHub");
-    return null;
-  }
 
   onMessageCallback = onStatusUpdate;
 
   // Creazione connessione seguendo l'esempio fornito
   connection = new signalR.HubConnectionBuilder()
-    .withUrl(hubUrl)
+    .withUrl("/productionHub")
     .withAutomaticReconnect()
     .build();
 
@@ -145,7 +136,6 @@ export async function initializeSignalR(onStatusUpdate) {
       console.error("Dettagli errore:", {
         message: error.message,
         stack: error.stack,
-        hubUrl: hubUrl
       });
       return null;
     }
