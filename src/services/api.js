@@ -1,7 +1,7 @@
 // Use relative URL to leverage Vite proxy in development
 const API_BASE_URL = import.meta.env.DEV
   ? ""
-  : "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net/productionHub";
+  : "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net";
 
 class ApiService {
   constructor() {
