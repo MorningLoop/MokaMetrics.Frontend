@@ -16,7 +16,7 @@ export async function initializeSignalR(onStatusUpdate) {
 
   // Creazione connessione seguendo l'esempio fornito
   connection = new signalR.HubConnectionBuilder()
-    .withUrl("/productionHub")
+    .withUrl("https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net/productionHub")
     .withAutomaticReconnect()
     .build();
 

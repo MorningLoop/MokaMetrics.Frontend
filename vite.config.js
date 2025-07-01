@@ -18,11 +18,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,//<-- DA METTERE TRUE IN PRODUZIONE
         },
-        "/productionHub": {
-          target: "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net",
-          changeOrigin: true,
-          secure: false,
-        },
+        // "/productionHub": {
+        //   target: "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net",
+        //   changeOrigin: true,
+        //   secure: false,
+        // },
       },
     },
     build: {

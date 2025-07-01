@@ -17,15 +17,15 @@ export const SignalRContext = React.createContext();
 export function SignalRContextProvider({ children }) {
   const [statusMachines, setStatusMachines] = useState([
     // Factory 1 - Brazil  
-   
-    
+
+
   ]);
 
   const connectionRef = useRef(null);
 
   const newSignalRConnection = () => {
     const conn = new signalR.HubConnectionBuilder()
-      .withUrl("/productionHub")
+      .withUrl("https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net/productionHub")
       .withAutomaticReconnect()
       .build();
 
@@ -45,13 +45,28 @@ export function SignalRContextProvider({ children }) {
     });
 
     conn.on("lotCompleted", (args) => {
-      console.log(JSON.parse(args));
+      const orderData = JSON.parse(args);
+      console.log("Order fulfilled:", orderData);
+
+      // Mostra notifica di successo
+      notification.success({
+        message: 'Lotto Completato!',
+        description: `L'ordine #${orderData.orderId || orderData.id || 'N/A'} è stato completato con successo.`,
+        icon: <CheckCircleOutlined style={{ color: '#14b8a6' }} />,
+        placement: 'topRight',
+        duration: 5,
+        style: {
+          backgroundColor: '#1f2937',
+          border: '1px solid #14b8a6',
+          color: '#ffffff'
+        }
+      });
     });
 
     conn.on("orderFulfilled", (args) => {
       const orderData = JSON.parse(args);
       console.log("Order fulfilled:", orderData);
-      
+
       // Mostra notifica di successo
       notification.success({
         message: 'Ordine Completato!',
@@ -70,7 +85,7 @@ export function SignalRContextProvider({ children }) {
     conn.on("status", (args) => {
       const statusData = JSON.parse(args);
       console.log("Received status data:", statusData);
-      
+
       // Mappa i campi dal formato backend al formato frontend
       const mappedData = {
         id: statusData.Machine || statusData.machine,
@@ -82,18 +97,18 @@ export function SignalRContextProvider({ children }) {
         factoryId: statusData.Location === "italy" ? 2 : statusData.Location === "vietnam" ? 3 : 1, // Map location to factoryId
         timestamp: new Date().toISOString()
       };
-      
+
       console.log("Mapped data:", mappedData);
-      
+
       // Update machine status in the state
       setStatusMachines(prevMachines => {
-        const existingMachineIndex = prevMachines.findIndex(machine => 
-          machine.id === mappedData.id || 
+        const existingMachineIndex = prevMachines.findIndex(machine =>
+          machine.id === mappedData.id ||
           machine.name === mappedData.name ||
           machine.machineId === mappedData.machineId ||
           machine.id === mappedData.machineId
         );
-        
+
         if (existingMachineIndex !== -1) {
           // Update existing machine
           const updatedMachines = [...prevMachines];
@@ -133,7 +148,7 @@ export function SignalRContextProvider({ children }) {
   useEffect(() => {
     console.log("Setting up SignalR connection...", connectionRef.current);
     startConnection();
-    
+
     // stop connection
     return () => {
       if (connectionRef.current) {
