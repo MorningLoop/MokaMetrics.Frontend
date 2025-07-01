@@ -51,9 +51,9 @@ class ApiService {
     return this.request(`/api/orders/${id}`);
   }
 
-  async createOrder(orderData) {
-    return this.request("/api/orders/", {
-      method: "POST",
+   async createOrder(orderData) {
+    return this.request('/api/orders/', {
+      method: 'POST',
       body: JSON.stringify(orderData),
     });
   }

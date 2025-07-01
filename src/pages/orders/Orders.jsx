@@ -1,22 +1,9 @@
-import {
-  Button,
-  Form,
-  InputNumber,
-  DatePicker,
-  message,
-  Spin,
-  Table,
-  Modal,
-  Space,
-  Tag,
-  Empty,
-  Select,
-} from "antd";
-import { useState, useEffect } from "react";
-import { PlusOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
-import "../index.css";
-import apiService from "../services/api";
-import dayjs from "dayjs";
+import { Button, Form, InputNumber, DatePicker, message, Spin, Table, Modal, Space, Tag, Empty } from 'antd';
+import { useState, useEffect } from 'react';
+import { PlusOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import '.././../index.css';
+import apiService from '../../services/api';
+import dayjs from 'dayjs';
 
 const { Item } = Form;
 const { Option } = Select;
@@ -61,18 +48,15 @@ const Orders = () => {
     try {
       setTableLoading(true);
       const data = await apiService.getOrders();
-      console.log("Fetched orders data:", data);
+      console.log('Fetched orders data:', data);
 
       // Check if data is wrapped in a response object
-      const ordersList = Array.isArray(data)
-        ? data
-        : data?.data
-        ? data.data
-        : data?.orders
-        ? data.orders
-        : [];
+      const ordersList = Array.isArray(data) ? data :
+        data?.data ? data.data :
+          data?.orders ? data.orders :
+            [];
 
-      console.log("Processed orders list:", ordersList);
+      console.log('Processed orders list:', ordersList);
 
       // Ensure each order has required fields
       const validOrders = ordersList.filter(
@@ -107,7 +91,7 @@ const Orders = () => {
       // Send the order to the API
       const response = await apiService.createOrder(orderData);
 
-      message.success("Order created successfully!");
+      message.success('Order created successfully!');
       form.resetFields();
       setModalVisible(false);
       fetchOrders(); // Refresh the list
@@ -351,7 +335,7 @@ const Orders = () => {
             </Item>
 
             <Item
-              label={<span style={{ color: "#18181b" }}>Fulfilled Date</span>}
+              label={<span style={{ color: '#18181b' }}>Fulfilled Date</span>}
               name="fullfiledDate"
             >
               <DatePicker

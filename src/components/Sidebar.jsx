@@ -1,4 +1,4 @@
-import { DashboardOutlined, OrderedListOutlined, MenuUnfoldOutlined, MenuFoldOutlined, ShopOutlined, CheckCircleOutlined, CustomerServiceFilled, CustomerServiceTwoTone, UserAddOutlined } from '@ant-design/icons';
+import { DashboardOutlined, OrderedListOutlined, MenuUnfoldOutlined, MenuFoldOutlined, ShopOutlined, CheckCircleOutlined, CustomerServiceFilled, CustomerServiceTwoTone, UserAddOutlined, PlusOutlined } from '@ant-design/icons';
 import { Menu } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -18,8 +18,21 @@ const Sidebar = () => {
         {
             key: 'orders',
             label: 'Orders',
-            type: 'item',
             icon: <OrderedListOutlined />,
+            children: [
+                {
+                    key: 'orders',
+                    label: 'Orders List',
+                    type: 'item',
+                    icon: <OrderedListOutlined />
+                },
+                {
+                    key: 'create-order',
+                    label: 'Create New Order',
+                    type: 'item',
+                    icon: <PlusOutlined />
+                }
+            ]
         },
         {
             key: 'factory',

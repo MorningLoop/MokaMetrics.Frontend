@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
-import apiService from "../services/api";
-import { Spin, message } from "antd";
+import apiService from '../../services/api';
+import { Spin, message } from 'antd';
 import {
   AreaChart,
   Area,
@@ -20,6 +20,10 @@ import {
 
 import { TrendingUp, Package, Layers, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useStatusMachines } from "../../hooks/useStatusMachines";
+import RealTimeMachineStatus from "../../components/RealTimeMachineStatus";
+import { MachineStatuses, getStatusEnum, getStatusColor } from "../../services/statusParser";
+
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  MOCK DATA (sostituisci con chiamate API reali)
@@ -88,82 +92,76 @@ const events = [
   },
 ];
 
-const factory = [
-  {
-    id: 1,
-    name: "Italy",
-    machines: [
-      {
-        name: "Macchina CNC2",
-        status: "error",
-      },
-      {
-        name: "Macchina CNC3",
-        status: "error",
-      },
-      {
-        name: "Macchina CNC4",
-        status: "error",
-      },
-      {
-        name: "Macchina CNC4",
-        status: "idle",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Vietnam",
-    machines: [
-      {
-        name: "Macchina CNC2",
-        status: "running",
-      },
-      {
-        name: "Macchina CNC3",
-        status: "idle",
-      },
-      {
-        name: "Macchina CNC4",
-        status: "running",
-      },
-      {
-        name: "Macchina CNC4",
-        status: "error",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Brasil",
-    machines: [
-      {
-        name: "Macchina CNC2",
-        status: "running",
-      },
-      {
-        name: "Macchina CNC3",
-        status: "idle",
-      },
-      {
-        name: "Macchina CNC4",
-        status: "running",
-      },
-      {
-        name: "Macchina CNC4",
-        status: "error",
-      },
-    ],
-  },
-];
-
-// Heat‑map dati di esempio (0–100% utilisation)
-const machines = [
-  { id: "CNC‑01", hours: [40, 30, 60, 75, 55, 20, 10] },
-  { id: "LATHE‑02", hours: [30, 50, 45, 80, 70, 60, 35] },
-  { id: "ASMB‑01", hours: [20, 25, 40, 60, 50, 30, 15] },
-  { id: "TEST‑01", hours: [50, 70, 80, 90, 85, 60, 40] },
-];
+const factory =
+  [
+    {
+      id: 1,
+      name: "Italy",
+      machines: [
+        {
+          name: "Macchina CNC2",
+          status: getStatusEnum("error")
+        },
+        {
+          name: "Macchina CNC3",
+          status: getStatusEnum("error")
+        },
+        {
+          name: "Macchina CNC4",
+          status: getStatusEnum("error")
+        }
+        ,
+        {
+          name: "Macchina CNC4",
+          status: getStatusEnum("idle")
+        }
+      ]
+    },
+    {
+      id: 2,
+      name: "Vietnam",
+      machines: [
+        {
+          name: "Macchina CNC2",
+          status: getStatusEnum("running")
+        },
+        {
+          name: "Macchina CNC3",
+          status: getStatusEnum("idle")
+        },
+        {
+          name: "Macchina CNC4",
+          status: getStatusEnum("running")
+        },
+        {
+          name: "Macchina CNC4",
+          status: getStatusEnum("error")
+        }
+      ]
+    },
+    {
+      id: 3,
+      name: "Brazil",
+      machines: [
+        {
+          name: "Macchina CNC2",
+          status: getStatusEnum("running")
+        },
+        {
+          name: "Macchina CNC3",
+          status: getStatusEnum("idle")
+        },
+        {
+          name: "Macchina CNC4",
+          status: getStatusEnum("running")
+        },
+        {
+          name: "Macchina CNC4",
+          status: getStatusEnum("error")
+        }
+      ]
+    }
+  ]
 
 function KPI({ icon, label, value, className = "" }) {
   const Icon = icon;
@@ -313,66 +311,84 @@ function EventLogTable({ orders = [], customers = [] }) {
   );
 }
 
-function MachineHeatMap() {
-  return (
-    <div className="rounded-2xl bg-zinc-800 p-4">
-      <h2 className="text-zinc-100 text-lg mb-4">Machine Utilization</h2>
-      <div className="space-y-2">
-        {machines.map((m) => (
-          <div key={m.id} className="flex items-center space-x-2">
-            <span className="w-24 text-sm text-zinc-300">{m.id}</span>
-            <div className="flex-grow grid grid-cols-7 gap-1">
-              {m.hours.map((u, idx) => (
-                <div
-                  key={idx}
-                  className="h-4 rounded-sm"
-                  style={{ backgroundColor: `hsl(174, 60%, ${20 + u * 0.6}%)` }}
-                  title={`${u}%`}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /**
  * Component Status factory
  */
-
 const StatusFactory = () => {
   const navigate = useNavigate();
+  const { statusMachines } = useStatusMachines();
+
+  // Raggruppa le macchine per factory se i dati hanno questa struttura
+  const factoriesWithRealData = factory.map(f => {
+    // Filtra le macchine reali per questa factory basandosi sul campo location
+    const realMachines = statusMachines.filter(machine => 
+      machine.location && machine.location.toLowerCase() === f.name.toLowerCase()
+    );
+    
+    // Crea sempre 4 macchine: usa i dati reali nei primi slot, poi riempi con "offline"
+    const machines = Array.from({ length: 4 }, (_, index) => {
+      // Se c'è una macchina reale per questo slot, usala
+      if (realMachines[index]) {
+        return realMachines[index];
+      } else {
+        // Altrimenti crea una macchina offline
+        return {
+          id: `${f.name.toLowerCase()}_machine_${index + 1}`,
+          name: `Macchina ${index + 1}`,
+          status: getStatusEnum('offline')
+        };
+      }
+    });
+    
+    return {
+      ...f,
+      machines: machines
+    };
+  });
+
   return (
     <div className="bg-zinc-800 rounded-2xl p-4 flex flex-col">
       <div>
         <p className="text-white text-lg mb-2">Status Factory</p>
+        {statusMachines.length > 0 ? (
+          <p className="text-teal-400 text-sm mb-2">
+            🟢 WebSocket connesso - {statusMachines.length} macchine monitorate
+          </p>
+        ) : (
+          <p className="text-yellow-400 text-sm mb-2">
+            🟡 In attesa di dati WebSocket...
+          </p>
+        )}
       </div>
       <div className="flex">
-        {factory.map((f) => {
+        {factoriesWithRealData.map(f => {
+          const runningCount = f.machines.filter(m => m.status === MachineStatuses.Operational).length;
+          const errorCount = f.machines.filter(m => m.status === MachineStatuses.Alarm).length;
+          const idleCount = f.machines.filter(m => m.status === MachineStatuses.Idle).length;
+          const pendingCount = f.machines.filter(m => m.status === MachineStatuses.Offline).length;
+          
           return (
-            <div
-              onClick={() => {
-                navigate(`status/${f.id}`);
-              }}
-              className="bg-zinc-900 p-2 m-1 rounded hover:bg-teal-800"
+            <div 
+              key={f.id}
+              onClick={() => navigate(`status/${f.id}`)} 
+              className="bg-zinc-900 p-2 m-1 rounded hover:bg-teal-800 cursor-pointer"
             >
-              <p className="text-2xl opacity-55 text-center">
-                {f.name.toUpperCase()}
-              </p>
-              <div className="flex flex-wrap ">
-                {f.machines.map((m) => {
+              <p className="text-2xl opacity-55 text-center">{f.name.toUpperCase()}</p>
+              
+              {/* Statistiche rapide */}
+              <div className="text-xs text-center mb-2 text-zinc-400">
+                🟢 {runningCount} | 🟡 {idleCount} | 🔴 {errorCount}
+                {pendingCount > 0 && ` | ⏳ ${pendingCount}`}
+              </div>
+              
+              <div className="flex flex-wrap">
+                {f.machines.map((m, index) => {
                   return (
-                    <div
-                      className={`w-10 h-10 m-1 rounded ${
-                        m.status == "error"
-                          ? "bg-red-500"
-                          : m.status == "running"
-                          ? "bg-green-400"
-                          : "bg-gray-500"
-                      }`}
-                    ></div>
+                    <div 
+                      key={m.id || index}
+                      className={`w-10 h-10 m-1 rounded ${getStatusColor(m.status)}`}
+                      title={`${m.name || `Macchina ${index + 1}`} - ${m.status}${m.error ? `: ${m.error}` : ''}`}
+                    />
                   );
                 })}
               </div>
@@ -392,29 +408,14 @@ export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [kpi, setKpi] = useState(kpiDefault);
-
-  // Fetch orders and customers from API
+  const navigate = useNavigate();
+  
+  // Utilizzo l'hook per accedere agli stati delle macchine
+  const { statusMachines, setStatusMachines } = useStatusMachines();
+  
+  // Fetch orders from API
   useEffect(() => {
     fetchOrders();
-    fetchCustomers();
-
-    // Connect to WebSocket for real-time updates
-    const ws = apiService.connectToStatusWebSocket(
-      (data) => {
-        console.log("WebSocket data received:", data);
-        // Update dashboard with real-time data if needed
-      },
-      (error) => {
-        console.error("WebSocket error:", error);
-      }
-    );
-
-    // Cleanup on unmount
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
   }, []);
 
   const fetchCustomers = async () => {
@@ -459,51 +460,57 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-  const [selectedPlant, setSelectedPlant] = useState("All Plants");
+
+
+  useEffect(() => {
+    console.log("Status machines aggiornate:", statusMachines);
+    
+    // Aggiorna i KPI basati sui dati delle macchine
+    if (statusMachines && statusMachines.length > 0) {
+      const runningMachines = statusMachines.filter(m => m.status === MachineStatuses.Operational).length;
+      const errorMachines = statusMachines.filter(m => m.status === MachineStatuses.Alarm).length;
+      const pendingMachines = statusMachines.filter(m => m.status === MachineStatuses.Offline).length;
+      
+      setKpi(prev => ({
+        ...prev,
+        alarms: errorMachines,
+        // Se ci sono macchine pending, mostra che stiamo aspettando dati
+        lots: pendingMachines > 0 ? `${orders.length} (${pendingMachines} pending)` : orders.length
+      }));
+    }
+  }, [statusMachines, orders]);
+
+
 
   return (
     <Spin spinning={loading} tip="Loading dashboard data...">
-      <div className="min-h-screen w-screen bg-zinc-900 text-zinc-100 p-6 space-y-6 font-sans flex flex-row">
-        <div className="flex flex-col w-full space-y-6">
-          {/* Header */}
-          <header className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Mekspresso
-            </h1>
-            <select
-              value={selectedPlant}
-              onChange={(e) => setSelectedPlant(e.target.value)}
-              className="bg-zinc-800 text-zinc-100 p-2 rounded-lg"
-            >
-              <option>All Plants</option>
-              {plants.map((p) => (
-                <option key={p.name}>{p.name}</option>
-              ))}
-            </select>
-          </header>
+      <div className="bg-zinc-900 text-zinc-100 p-4 lg:p-6 h-full">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">Mekspresso</h1>
+        </header>
 
-          {/* KPI Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPI icon={Package} label="Output Today" value={kpi.output} />
-            <KPI icon={TrendingUp} label="OEE" value={`${kpi.oee}%`} />
-            <KPI icon={Layers} label="Active Lots" value={kpi.lots} />
-            <KPI icon={Bell} label="Open Alarms" value={kpi.alarms} />
-          </div>
+        {/* KPI Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
+          <KPI icon={Layers} label="Active Lots" value={kpi.lots} />
+          <KPI icon={Bell} label="Open Alarms" value={kpi.alarms} />
+        </div>
 
-          {/* Production Chart and status factory*/}
-          <div className="grid md:grid-cols-2 gap-4">
-            <ProductionChart />
-            <StatusFactory />
-          </div>
+        {/* Production Chart and status factory*/}
+        <div className="grid grid-cols-1 xl:grid-cols-1 gap-4 mb-6">
 
-          {/* Map + Event Log */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <PlantMap />
-            <EventLogTable orders={orders} customers={customers} />
-          </div>
+          <StatusFactory />
+        </div>
 
-          {/* Heat Map */}
-          <MachineHeatMap />
+        {/* Map + Event Log */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+          <PlantMap />
+          <EventLogTable orders={orders} />
+        </div>
+
+        {/* Real-time Machine Status */}
+        <div className="grid grid-cols-1 gap-4">
+          <RealTimeMachineStatus />
         </div>
       </div>
     </Spin>
