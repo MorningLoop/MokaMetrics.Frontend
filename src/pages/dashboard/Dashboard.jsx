@@ -614,7 +614,7 @@ export default function Dashboard() {
       setKpi(prev => ({
         ...prev,
         alarms: errorMachines,
-        activeOrders: orders.filter(order => !order.fullFilled).length,
+        activeOrders: data.filter(order => !order.fullfilledDate).length,
       }));
     }
   }, [statusMachines, orders]);
