@@ -487,7 +487,7 @@ export default function Dashboard() {
       <div className="bg-zinc-900 text-zinc-100 p-4 lg:p-6 h-full">
         {/* Header */}
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Mekspresso</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         </header>
 
         {/* KPI Row */}

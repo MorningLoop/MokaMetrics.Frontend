@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
-import { notification } from "antd";
+import { message, notification } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 import { getStatusEnum } from "../services/statusParser";
 
@@ -21,8 +21,9 @@ export function SignalRContextProvider({ children }) {
 
   ]);
 
-  const API_BASE_URL = "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net";
+  const [api, contextHolder] = notification.useNotification();
 
+  const API_BASE_URL = "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net";
 
   const connectionRef = useRef(null);
 
@@ -52,17 +53,13 @@ export function SignalRContextProvider({ children }) {
       console.log("lot completed:", orderData);
 
       // Mostra notifica di successo
-      notification.success({
+      api.success({
         message: 'Lotto Completato!',
-        description: `L'ordine #${orderData.orderId || orderData.id || 'N/A'} è stato completato con successo.`,
+        description: `L'ordine #${orderData.LotCode} è stato completato con successo. Ha prodotto ${orderData.LotProducedQuantity} pezzi.`,
         icon: <CheckCircleOutlined style={{ color: '#14b8a6' }} />,
         placement: 'topRight',
         duration: 5,
-        style: {
-          backgroundColor: '#1f2937',
-          border: '1px solid #14b8a6',
-          color: '#ffffff'
-        }
+        showProgress: true,
       });
     });
 
@@ -70,18 +67,15 @@ export function SignalRContextProvider({ children }) {
       const orderData = JSON.parse(args);
       console.log("Order fulfilled:", orderData);
 
-      // Mostra notifica di successo
-      notification.success({
+
+      api.success({
         message: 'Ordine Completato!',
-        description: `L'ordine #${orderData.orderId || orderData.id || 'N/A'} è stato completato con successo.`,
+        description: `L'ordine #${orderData.orderId} è stato completato con successo.`,
         icon: <CheckCircleOutlined style={{ color: '#14b8a6' }} />,
         placement: 'topRight',
-        duration: 5,
-        style: {
-          backgroundColor: '#1f2937',
-          border: '1px solid #14b8a6',
-          color: '#ffffff'
-        }
+        duration: null,
+        showProgress: true,
+        
       });
     });
 
@@ -176,6 +170,10 @@ export function SignalRContextProvider({ children }) {
   };
 
   return (
-    <SignalRContext.Provider value={value}>{children}</SignalRContext.Provider>
+
+    <SignalRContext.Provider value={value}>
+      {contextHolder}
+      {children}
+      </SignalRContext.Provider>
   );
 }
