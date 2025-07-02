@@ -21,6 +21,12 @@ export function SignalRContextProvider({ children }) {
 
   ]);
 
+  // Stato per il grafico real-time degli ordini
+  const [realtimeData, setRealtimeData] = useState([
+    // Alcuni dati iniziali per mostrare il grafico
+    { time: "00:00", orders: 0, lots: 0, timestamp: Date.now() - 60000 },
+  ]);
+
   const [api, contextHolder] = notification.useNotification();
 
   const API_BASE_URL = "https://mokametrics-api-fafshjgtf4degege.italynorth-01.azurewebsites.net";
@@ -52,6 +58,26 @@ export function SignalRContextProvider({ children }) {
       const orderData = JSON.parse(args);
       console.log("lot completed:", orderData);
 
+      // Aggiorna i dati del grafico real-time per i lotti
+      const currentTime = new Date().toLocaleTimeString('it-IT', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      setRealtimeData(prevData => {
+        const newDataPoint = {
+          time: currentTime,
+          orders: prevData[prevData.length - 1]?.orders || 0, // Mantieni il contatore ordini
+          lots: (prevData[prevData.length - 1]?.lots || 0) + 1, // Incrementa solo i lotti
+          timestamp: new Date().getTime()
+        };
+        
+        // Mantieni solo gli ultimi 20 punti dati per evitare che il grafico diventi troppo pesante
+        const updatedData = [...prevData, newDataPoint].slice(-20);
+        console.log("Updated realtime chart data (lot completed):", updatedData);
+        return updatedData;
+      });
+
       // Mostra notifica di successo
       api.success({
         message: 'Lotto Completato!',
@@ -61,12 +87,33 @@ export function SignalRContextProvider({ children }) {
         duration: 5,
         showProgress: true,
       });
+
+      
     });
 
     conn.on("orderFulfilled", (args) => {
       const orderData = JSON.parse(args);
       console.log("Order fulfilled:", orderData);
 
+      // Aggiorna i dati del grafico real-time
+      const currentTime = new Date().toLocaleTimeString('it-IT', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      setRealtimeData(prevData => {
+        const newDataPoint = {
+          time: currentTime,
+          orders: (prevData[prevData.length - 1]?.orders || 0) + 1,
+          lots: (prevData[prevData.length - 1]?.lots || 0) + (orderData.lotsCount || 1),
+          timestamp: new Date().getTime()
+        };
+        
+        // Mantieni solo gli ultimi 20 punti dati per evitare che il grafico diventi troppo pesante
+        const updatedData = [...prevData, newDataPoint].slice(-20);
+        console.log("Updated realtime chart data:", updatedData);
+        return updatedData;
+      });
 
       api.success({
         message: 'Ordine Completato!',
@@ -167,6 +214,8 @@ export function SignalRContextProvider({ children }) {
     API_BASE_URL,
     statusMachines,
     setStatusMachines,
+    realtimeData,
+    setRealtimeData,
   };
 
   return (

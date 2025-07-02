@@ -49,23 +49,14 @@ const plants = [
   {
     name: "Italy",
     position: [46.336829606339776, 13.138468541188923],
-    running: 1,
-    idle: 2,
-    alarm: 1,
   },
   {
     name: "Brazil",
     position: [-13.920051047568641, -50.67785644713438],
-    running: 7,
-    idle: 4,
-    alarm: 0,
   },
   {
     name: "Vietnam",
     position: [17.41240398788743, 102.8124039972215],
-    running: 9,
-    idle: 3,
-    alarm: 2,
   },
 ];
 
@@ -209,6 +200,29 @@ function ProductionChart() {
 }
 
 function PlantMap() {
+  const { statusMachines } = useStatusMachines();
+
+  // Calcola dinamicamente i valori per ogni plant basandosi sui dati reali delle macchine
+  const plantsWithRealData = plants.map((plant) => {
+    // Filtra le macchine per questa location/plant
+    const plantMachines = statusMachines.filter(machine => 
+      machine.location && machine.location.toLowerCase() === plant.name.toLowerCase()
+    );
+
+    // Calcola i conteggi per status
+    const running = plantMachines.filter(m => m.status === MachineStatuses.Operational).length;
+    const idle = plantMachines.filter(m => m.status === MachineStatuses.Idle).length;
+    const alarm = plantMachines.filter(m => m.status === MachineStatuses.Alarm).length;
+
+    return {
+      ...plant,
+      running,
+      idle,
+      alarm,
+      totalMachines: plantMachines.length
+    };
+  });
+
   return (
     <div className="rounded-2xl bg-zinc-800 overflow-hidden">
       <MapContainer
@@ -222,7 +236,7 @@ function PlantMap() {
           attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {plants.map((p) => (
+        {plantsWithRealData.map((p) => (
           <CircleMarker
             key={p.name}
             center={p.position}
@@ -238,6 +252,9 @@ function PlantMap() {
             <MapTooltip>
               <div className="text-sm text-gray-900">
                 <strong className="block mb-1">{p.name}</strong>
+                <div className="text-xs text-gray-600 mb-1">
+                  Total machines: {p.totalMachines}
+                </div>
                 <div>
                   Running: <span className="text-green-600">{p.running}</span>
                 </div>
@@ -263,7 +280,6 @@ function EventLogTable({ orders = [], customers = [] }) {
     const customerName = customer
       ? customer.name
       : `Customer ${order.customerId}`;
-
     return {
       severity: "Info",
       time: new Date(order.orderDate).toLocaleTimeString("it-IT", {
@@ -272,7 +288,7 @@ function EventLogTable({ orders = [], customers = [] }) {
       }),
       plant: customerName,
       message: `Order #${order.id} - ${
-        order.lots?.reduce((sum, lot) => sum + lot.quantity, 0) || 0
+        order.quantityMachines
       } machines`,
     };
   });
@@ -398,6 +414,130 @@ const StatusFactory = () => {
   );
 };
 
+function RealTimeMachineChart() {
+  const { statusMachines } = useStatusMachines();
+
+  // Calcola le macchine attive per ogni factory
+  const calculateMachineData = () => {
+    const currentTime = new Date().toLocaleTimeString('it-IT', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+
+    const italy = statusMachines.filter(m => 
+      m.location && m.location.toLowerCase() === 'italy' && m.status === MachineStatuses.Operational
+    ).length;
+
+    const brazil = statusMachines.filter(m => 
+      m.location && m.location.toLowerCase() === 'brazil' && m.status === MachineStatuses.Operational
+    ).length;
+
+    const vietnam = statusMachines.filter(m => 
+      m.location && m.location.toLowerCase() === 'vietnam' && m.status === MachineStatuses.Operational
+    ).length;
+
+    return {
+      time: currentTime,
+      Italy: italy,
+      Brazil: brazil,
+      Vietnam: vietnam,
+      timestamp: new Date().getTime()
+    };
+  };
+
+  // Stato locale per i dati del grafico
+  const [machineData, setMachineData] = useState([calculateMachineData()]);
+
+  // Aggiorna i dati quando cambiano le macchine
+  useEffect(() => {
+    const newData = calculateMachineData();
+    
+    setMachineData(prevData => {
+      // Evita di aggiungere lo stesso punto se non ci sono cambiamenti
+      const lastPoint = prevData[prevData.length - 1];
+      if (lastPoint && 
+          lastPoint.Italy === newData.Italy && 
+          lastPoint.Brazil === newData.Brazil && 
+          lastPoint.Vietnam === newData.Vietnam) {
+        return prevData;
+      }
+      
+      // Mantieni solo gli ultimi 15 punti dati
+      const updatedData = [...prevData, newData].slice(-15);
+      return updatedData;
+    });
+  }, [statusMachines]);
+
+  return (
+    <div className="rounded-2xl bg-zinc-800 p-4">
+      <h2 className="text-zinc-100 text-lg mb-2">Macchine Attive Real-Time</h2>
+      <div className="text-xs text-zinc-400 mb-3">
+        🇮🇹 Italy: {machineData[machineData.length - 1]?.Italy || 0} | 
+        🇧🇷 Brazil: {machineData[machineData.length - 1]?.Brazil || 0} | 
+        🇻🇳 Vietnam: {machineData[machineData.length - 1]?.Vietnam || 0}
+      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <AreaChart
+          data={machineData}
+          margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="italyGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="brazilGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="vietnamGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
+          <XAxis dataKey="time" stroke="#a1a1aa" fontSize={10} />
+          <YAxis stroke="#a1a1aa" fontSize={10} domain={[0, 4]} />
+          <ChartTooltip 
+            cursor={{ stroke: "#4b5563", strokeWidth: 1 }}
+            labelStyle={{ color: "#000" }}
+            contentStyle={{ 
+              backgroundColor: "#27272a", 
+              border: "1px solid #52525b", 
+              borderRadius: "8px",
+              color: "#f4f4f5"
+            }}
+          />
+          <Area
+            type="stepAfter"
+            dataKey="Italy"
+            stroke="#10b981"
+            fill="url(#italyGradient)"
+            strokeWidth={2}
+            name="🇮🇹 Italy"
+          />
+          <Area
+            type="stepAfter"
+            dataKey="Brazil"
+            stroke="#3b82f6"
+            fill="url(#brazilGradient)"
+            strokeWidth={2}
+            name="🇧🇷 Brazil"
+          />
+          <Area
+            type="stepAfter"
+            dataKey="Vietnam"
+            stroke="#f59e0b"
+            fill="url(#vietnamGradient)"
+            strokeWidth={2}
+            name="🇻🇳 Vietnam"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 //  MAIN DASHBOARD
 // ──────────────────────────────────────────────────────────────────────────────
@@ -470,7 +610,7 @@ export default function Dashboard() {
       const runningMachines = statusMachines.filter(m => m.status === MachineStatuses.Operational).length;
       const errorMachines = statusMachines.filter(m => m.status === MachineStatuses.Alarm).length;
       const pendingMachines = statusMachines.filter(m => m.status === MachineStatuses.Offline).length;
-      
+
       setKpi(prev => ({
         ...prev,
         alarms: errorMachines,
@@ -501,8 +641,9 @@ export default function Dashboard() {
           <StatusFactory />
         </div>
 
-        {/* Map + Event Log */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+        {/* Real-time Chart + Map + Event Log */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+          <RealTimeMachineChart />
           <PlantMap />
           <EventLogTable orders={orders} />
         </div>
