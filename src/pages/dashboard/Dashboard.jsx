@@ -535,7 +535,7 @@ function RealTimeMachineChart() {
         </AreaChart>
       </ResponsiveContainer>
     </div>
-  );
+  );1
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -614,7 +614,7 @@ export default function Dashboard() {
       setKpi(prev => ({
         ...prev,
         alarms: errorMachines,
-        activeOrders: data.filter(order => !order.fullfilledDate).length,
+        activeOrders: orders.filter(order => !order.fullfilledDate).length,
       }));
     }
   }, [statusMachines, orders]);
