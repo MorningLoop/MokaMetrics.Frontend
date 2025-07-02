@@ -45,7 +45,6 @@ class ApiService {
   // Orders endpoints
   async getOrders() {
     return this.request("/api/orders/");
-    console.log
   }
 
   async getOrderById(id) {
@@ -101,35 +100,6 @@ class ApiService {
     });
   }
 
-  // WebSocket connection for status updates
-  connectToStatusWebSocket(onMessage, onError) {
-    const wsUrl = `${this.baseURL.replace("https", "wss")}/ws/status/`;
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-      } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-      if (onError) onError(error);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
-
-    return ws;
-  }
 }
 
 export default new ApiService();

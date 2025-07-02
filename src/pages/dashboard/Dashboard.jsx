@@ -29,10 +29,8 @@ import { MachineStatuses, getStatusEnum, getStatusColor } from "../../services/s
 //  MOCK DATA (sostituisci con chiamate API reali)
 // ──────────────────────────────────────────────────────────────────────────────
 const kpiDefault = {
-  output: 136,
-  oee: 92,
-  lots: 5,
-  alarms: 2,
+  alarms: 0,
+  activeOrders: 0,
 };
 
 const production = [
@@ -444,13 +442,15 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const data = await apiService.getOrders();
+      
       setOrders(data);
 
       // Update KPIs based on orders
       if (data && data.length > 0) {
         setKpi((prev) => ({
           ...prev,
-          lots: data.length,
+
+           activeOrders: data.filter(order => !order.fullfilledDate).length,
         }));
       }
     } catch (error) {
@@ -474,8 +474,7 @@ export default function Dashboard() {
       setKpi(prev => ({
         ...prev,
         alarms: errorMachines,
-        // Se ci sono macchine pending, mostra che stiamo aspettando dati
-        lots: pendingMachines > 0 ? `${orders.length} (${pendingMachines} pending)` : orders.length
+        activeOrders: orders.filter(order => !order.fullFilled).length,
       }));
     }
   }, [statusMachines, orders]);
@@ -492,7 +491,7 @@ export default function Dashboard() {
 
         {/* KPI Row */}
         <div className="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
-          <KPI icon={Layers} label="Active Lots" value={kpi.lots} />
+          <KPI icon={Layers} label="Ordini Attivi" value={kpi.activeOrders} />
           <KPI icon={Bell} label="Open Alarms" value={kpi.alarms} />
         </div>
 
